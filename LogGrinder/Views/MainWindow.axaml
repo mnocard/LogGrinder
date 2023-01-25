@@ -24,7 +24,7 @@
                 Padding="0,0,0,0"
                 Command="{Binding OpenFile}"
                 DockPanel.Dock="Left"
-                ToolTip.Tip="Открыть папку с логами">
+                ToolTip.Tip="Открыть файл">
                 <material:MaterialIcon
                     Width="25"
                     Height="25"
@@ -167,7 +167,7 @@
                         Padding="0,0,0,0"
                         Command="{Binding OpenInFile}"
                         CommandParameter="{Binding ElementName=DataGrid}"
-                        ToolTip.Tip="Открыть файл">
+                        ToolTip.Tip="Открыть в файле">
                         <material:MaterialIcon
                             Width="25"
                             Height="25"

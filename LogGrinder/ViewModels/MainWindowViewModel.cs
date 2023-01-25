@@ -581,15 +581,8 @@ namespace LogGrinder.ViewModels
         {
             if (LogLinesBackup.Any() && !_IsFileOnView)
             {
-                var logLine = SelectedLogLine;
-
                 CreateLogLines(LogLinesBackup);
                 _IsFileOnView = true;
-
-                SelectedLogLine = logLine;
-
-                if (parameter is DataGrid datagrid && LogLines.Contains(SelectedLogLine))
-                    datagrid.ScrollIntoView(SelectedLogLine, null);
             }
             else if (!LogLinesBackup.Any())
                 StatusChanging(StatusChooseLogFile);
@@ -671,18 +664,16 @@ namespace LogGrinder.ViewModels
                 && !string.IsNullOrEmpty(SelectedLogLine.FileName)
                 && CurrentSearchResult.ClearResults.Contains(SelectedLogLine))
             {
+                var logLine = SelectedLogLine;
 
                 if (SelectedLogLine.FileName == CurrentLogFileItem)
                     await ShowLogLinesBackup(parameter);
                 else
-                {
-                    var logLine = SelectedLogLine;
                     CurrentLogFileItem = SelectedLogLine.FileName;
-                    SelectedLogLine = logLine;
-                }
 
+                SelectedLogLine = logLine;
                 if (LogLines.Contains(SelectedLogLine))
-                    datagrid.ScrollIntoView(SelectedLogLine, null);
+                    datagrid.ScrollIntoView(SelectedLogLine, datagrid.Columns[0]);
 
                 return;
             }
