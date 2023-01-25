@@ -1,0 +1,41 @@
+<Window
+    x:Class="LogGrinder.Views.InfoWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Name="window"
+    Title="{Binding Title}"
+    d:DesignHeight="400"
+    d:DesignWidth="250"
+    Icon="/Assets/Icon.ico"
+    mc:Ignorable="d">
+    <Grid RowDefinitions="*, 50">
+        <TextBox
+            Grid.Row="0"
+            Margin="5"
+            VerticalAlignment="Center"
+            IsReadOnly="True"
+            ScrollViewer.VerticalScrollBarVisibility="Auto"
+            Text="{Binding InfoMessage}"
+            TextAlignment="Left"
+            TextWrapping="Wrap" />
+        <DockPanel Grid.Row="1" LastChildFill="False">
+            <Button
+                Width="100"
+                Margin="5"
+                Command="{Binding SecondCommand}"
+                CommandParameter="{Binding #window}"
+                Content="{Binding ButtonNameTwo}"
+                DockPanel.Dock="Right"
+                IsVisible="{Binding IsCancelButtonAvailable}" />
+            <Button
+                Width="100"
+                Margin="5"
+                Command="{Binding FirstCommand}"
+                CommandParameter="{Binding #window}"
+                Content="{Binding ButtonNameOne}"
+                DockPanel.Dock="Right" />
+        </DockPanel>
+    </Grid>
+</Window>

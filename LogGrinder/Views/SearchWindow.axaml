@@ -1,0 +1,171 @@
+<Window
+    x:Class="LogGrinder.Views.SearchWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Name="window"
+    Title="{Binding Title}"
+    d:DesignHeight="800"
+    d:DesignWidth="800"
+    DataContext="{Binding HWModel, Source={StaticResource Locator}}"
+    Icon="/Assets/Icon.ico"
+    mc:Ignorable="d">
+    <Window.KeyBindings>
+        <KeyBinding
+            Command="{Binding CloseWindow}"
+            CommandParameter="{Binding #window}"
+            Gesture="Escape" />
+    </Window.KeyBindings>
+    <Grid ColumnDefinitions="*, 10, *" RowDefinitions="*, 30">
+        <DockPanel Grid.Column="0" LastChildFill="True">
+            <Grid Height="50" DockPanel.Dock="Bottom">
+                <Button
+                    Grid.Row="3"
+                    Width="250"
+                    Margin="5"
+                    Command="{Binding CloseWithSearchInCurrentFile}"
+                    CommandParameter="{Binding #window}"
+                    DockPanel.Dock="Bottom">
+                    Искать в текущем файле
+                </Button>
+            </Grid>
+            <StackPanel Margin="5" Orientation="Vertical">
+                <Label
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Gray"
+                    BorderThickness="0,2,0,0"
+                    Content="Искать следующий текст" />
+                <TextBox
+                    VerticalAlignment="Center"
+                    HorizontalContentAlignment="Left"
+                    VerticalContentAlignment="Center"
+                    AcceptsReturn="True"
+                    Text="{Binding SearchOption.SearchLine}"
+                    TextWrapping="Wrap"
+                    Watermark="Введите текст для поиска" />
+                <Label
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Gray"
+                    BorderThickness="0,2,0,0"
+                    Content="Искать в строках" />
+                <Grid ColumnDefinitions="50, 120, 50, 120">
+                    <Label
+                        Grid.Column="0"
+                        HorizontalContentAlignment="Left"
+                        VerticalContentAlignment="Center"
+                        Content="С" />
+                    <TextBox
+                        Grid.Column="1"
+                        Text="{Binding SearchOption.LineNumberStart}"
+                        Watermark="Номер строки" />
+                    <Label
+                        Grid.Column="2"
+                        Margin="10,0,0,0"
+                        HorizontalContentAlignment="Left"
+                        VerticalContentAlignment="Center"
+                        Content="По" />
+                    <TextBox
+                        Grid.Column="3"
+                        Text="{Binding SearchOption.LineNumberEnd}"
+                        Watermark="Номер строки" />
+                </Grid>
+                <Label
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Gray"
+                    BorderThickness="0,2,0,0"
+                    Content="Искать за период" />
+                <Grid ColumnDefinitions="50, *">
+                    <Label
+                        Grid.Column="0"
+                        HorizontalContentAlignment="Left"
+                        VerticalContentAlignment="Center"
+                        Content="С" />
+                    <TextBox
+                        Grid.Column="1"
+                        Text="{Binding SearchOption.DateBegin}"
+                        Watermark="Пример даты: 2022-05-25 06:06:06" />
+                </Grid>
+                <Grid ColumnDefinitions="50, *">
+                    <Label
+                        Grid.Column="0"
+                        HorizontalContentAlignment="Left"
+                        VerticalContentAlignment="Center"
+                        Content="По" />
+                    <TextBox
+                        Grid.Column="1"
+                        Text="{Binding SearchOption.DateEnd}"
+                        Watermark="Пример даты: 2022-05-25 06:06:06" />
+                </Grid>
+                <Label
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Gray"
+                    BorderThickness="0,2,0,0"
+                    Content="Выводить дополнительно" />
+                <Grid ColumnDefinitions="75, *">
+                    <TextBox Grid.Column="0" Text="{Binding SearchOption.LinesCountBefore}" />
+                    <Label
+                        Grid.Column="1"
+                        VerticalContentAlignment="Center"
+                        Content="строк до найденной строки" />
+                </Grid>
+                <Grid ColumnDefinitions="75, *">
+                    <TextBox Grid.Column="0" Text="{Binding SearchOption.LinesCountAfter}" />
+                    <Label
+                        Grid.Column="1"
+                        VerticalContentAlignment="Center"
+                        Content="строк после найденной строки" />
+                </Grid>
+                <Label
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Gray"
+                    BorderThickness="0,2,0,0"
+                    Content="Исключить строки, содержащие следующий текст" />
+                <TextBox
+                    VerticalAlignment="Center"
+                    HorizontalContentAlignment="Left"
+                    VerticalContentAlignment="Center"
+                    AcceptsReturn="True"
+                    Text="{Binding SearchOption.ExcludeLine}"
+                    TextWrapping="Wrap"
+                    Watermark="Введите текст, который необходимо игнорировать" />
+            </StackPanel>
+        </DockPanel>
+        <GridSplitter
+            Grid.Column="1"
+            ResizeBehavior="BasedOnAlignment"
+            ResizeDirection="Columns" />
+        <Grid Grid.Column="2" RowDefinitions="*, 50">
+            <ListBox
+                Grid.Row="0"
+                Items="{Binding LogFiles}"
+                SelectedItems="{Binding SelectedLogFiles}"
+                SelectionMode="Multiple"
+                ToolTip.Tip="Можно выбрать несколько файлов зажав клавишу Ctrl" />
+            <Button
+                Grid.Row="3"
+                Width="250"
+                Margin="5"
+                Command="{Binding CloseWithSearchInselectedFiles}"
+                CommandParameter="{Binding #window}"
+                DockPanel.Dock="Bottom">
+                Искать в выбранных файлах
+            </Button>
+        </Grid>
+        <Border
+            Grid.Row="1"
+            Grid.ColumnSpan="3"
+            BorderBrush="Gray"
+            BorderThickness="0,2,0,0">
+            <TextBlock
+                Margin="5"
+                VerticalAlignment="Center"
+                Text="{Binding Status}" />
+        </Border>
+    </Grid>
+</Window>

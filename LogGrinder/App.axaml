@@ -1,0 +1,24 @@
+<Application
+    x:Class="LogGrinder.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="clr-namespace:LogGrinder.Core"
+    xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles">
+    <Application.Styles>
+        <StyleInclude Source="avares://Material.Avalonia/Material.Avalonia.Templates.xaml" />
+        <StyleInclude Source="avares://Avalonia.Themes.Default/Accents/BaseDark.xaml" />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Default.xaml" />
+        <StyleInclude Source="avares://Material.Icons.Avalonia/App.xaml" />
+    </Application.Styles>
+    <Application.Resources>
+        <ResourceDictionary>
+            <core:ViewModelLocator x:Key="Locator" />
+            <ResourceDictionary.MergedDictionaries>
+                <themes:BundledTheme
+                    BaseTheme="Dark"
+                    PrimaryColor="Orange"
+                    SecondaryColor="Blue" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
