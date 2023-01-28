@@ -21,14 +21,16 @@ namespace LogGrinder.Services
     {
         private readonly IFileHandler _fileHandler;
         private readonly ISearchLineHandler _searchLineHandler;
-        private readonly ILogger _log = Log.ForContext<FileHandler>();
+        private readonly ILogger _log = Log.ForContext<Searcher>();
+        private readonly IFileManager _fileManager;
         private CancellationTokenSource _tokenSource;
         private CancellationToken _token;
 
-        public Searcher(ISearchLineHandler searchLineHandler, IFileHandler fileHandler)
+        public Searcher(ISearchLineHandler searchLineHandler, IFileHandler fileHandler, IFileManager fileManager)
         {
             _searchLineHandler = searchLineHandler;
             _fileHandler = fileHandler;
+            _fileManager = fileManager;
         }
 
         /// <inheritdoc />
@@ -89,7 +91,7 @@ namespace LogGrinder.Services
                     Share = FileShare.ReadWrite,
                 };
 
-                using var file = new StreamReader(filePath, fileReadingOptionns);
+                using var file = _fileManager.StreamReader(filePath, fileReadingOptionns);
                 while ((jsonString = file.ReadLine()) != null)
                 {
                     if (_token.IsCancellationRequested)

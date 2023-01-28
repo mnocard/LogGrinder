@@ -21,8 +21,12 @@ namespace LogGrinder.Services
         private long _fileSize = 0;
         private string _fileName = string.Empty;
         private readonly ILogger _log = Log.ForContext<FileHandler>();
+        private readonly IFileManager _fileManager;
         private CancellationTokenSource tokenSource;
         private CancellationToken token;
+
+        public FileHandler(IFileManager fileManager) => _fileManager = fileManager;
+
 
         /// <inheritdoc />
         public async Task<List<LogModel>> ConvertFileToView(string filePath)
@@ -39,14 +43,14 @@ namespace LogGrinder.Services
 
             try
             {
-                var fileReadingOptionns = new FileStreamOptions
+                var fileReadingOptions = new FileStreamOptions
                 {
                     Access = FileAccess.Read,
                     Mode = FileMode.Open,
                     Share = FileShare.ReadWrite,
                 };
 
-                using var file = new StreamReader(filePath, fileReadingOptionns);
+                using var file = _fileManager.StreamReader(filePath, fileReadingOptions);
 
                 // Повторная обработка того же самого файла
                 if (isSameFile)

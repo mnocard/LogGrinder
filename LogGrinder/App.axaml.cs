@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -63,6 +64,7 @@ namespace LogGrinder
             services.AddTransient<ILineHandler, LineHandler>();
             services.AddTransient<ISearcher, Searcher>();
             services.AddTransient<ISearchLineHandler, SearchLineHandler>();
+            services.AddTransient<IFileManager, FileManager>();
         }
     }
 }
