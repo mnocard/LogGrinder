@@ -2,19 +2,27 @@
 {
     public class SearchLineHandlerTest
     {
+        private readonly Fixture _fixture;
+        private readonly ISearchLineHandler _sut;
+        private readonly SearchModel _expectedSearchModel;
+
+        public SearchLineHandlerTest()
+        {
+            _fixture = new Fixture();
+            _fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
+            _sut = _fixture.Create<ISearchLineHandler>();
+            _expectedSearchModel = new SearchModel();
+        }
+
         [Fact]
         public void ProcessSearchLine_ArgumentException_StringIsEmpty()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
             const string exceptionText = "Строка не соответствует шаблону.";
             const string line = "Random line";
 
             // Act
-            Action act = () => sut.ProcessSearchLine(line);
+            Action act = () => _sut.ProcessSearchLine(line);
             var exception = Record.Exception(act);
 
             // Assert
@@ -23,20 +31,15 @@
             Assert.Equal(exceptionText, exception.Message);
         }
 
-
         [Fact]
         public void ProcessSearchLine_ArgumentException_EscapeQuotes()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
             const string exceptionText = "Строка содержит неэкраннированную двойную кавычку.";
             const string line = "$mt=\"Quote \" line\"";
 
             // Act
-            Action act = () => sut.ProcessSearchLine(line);
+            Action act = () => _sut.ProcessSearchLine(line);
             var exception = Record.Exception(act);
 
             // Assert
@@ -50,12 +53,7 @@
         public void ProcessSearchLine_2DifferentUnitedAttributes()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
-            var expectedSearchModel = new SearchModel();
-            expectedSearchModel.Attributes.AddRange(new[] {
+            _expectedSearchModel.Attributes.AddRange(new[] {
                 new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = "^[R][a][n][d][o][m][ ][l][i][n][e]$" },
                 new SearchModel.Attribute { Condition = true, Name = "t", SearchLinePattern = "^[R][a][n][d][o][m][ ][l][i][n][e]$" },
             });
@@ -63,24 +61,19 @@
             const string line = "$mt$t=\"Random line\"";
 
             // Act
-            var result = sut.ProcessSearchLine(line);
+            var result = _sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
             Assert.NotNull(result);
-            Assert.True(SearchModelsEquals(result, expectedSearchModel));
+            Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
         [Fact]
         public void ProcessSearchLine_2SameSplittedAttributes()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
-            var expectedSearchModel = new SearchModel();
-            expectedSearchModel.Attributes.AddRange(new[] {
+            _expectedSearchModel.Attributes.AddRange(new[] {
                 new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = "^[F][i][r][s][t][ ][l][i][n][e]$" },
                 new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = "^[S][e][c][o][n][d][ ][l][i][n][e]$" },
             });
@@ -88,24 +81,19 @@
             const string line = "$mt=\"First line\" $mt=\"Second line\"";
 
             // Act
-            var result = sut.ProcessSearchLine(line);
+            var result = _sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
             Assert.NotNull(result);
-            Assert.True(SearchModelsEquals(result, expectedSearchModel));
+            Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
         [Fact]
         public void ProcessSearchLine_ExcludeAttributes()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
-            var expectedSearchModel = new SearchModel();
-            expectedSearchModel.Attributes.AddRange(new[] {
+            _expectedSearchModel.Attributes.AddRange(new[] {
                 new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = "^[F][i][r][s][t][ ][l][i][n][e]$" },
                 new SearchModel.Attribute { Condition = false, Name = "mt", SearchLinePattern = "^[S][e][c][o][n][d][ ][l][i][n][e]$" },
             });
@@ -113,93 +101,73 @@
             const string line = "$mt=\"First line\" $mt=-\"Second line\"";
 
             // Act
-            var result = sut.ProcessSearchLine(line);
+            var result = _sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
             Assert.NotNull(result);
-            Assert.True(SearchModelsEquals(result, expectedSearchModel));
+            Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
         [Fact]
         public void ProcessSearchLine_AsteriskAttributes()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
-            var expectedSearchModel = new SearchModel();
-            expectedSearchModel.Attributes.Add(
+            _expectedSearchModel.Attributes.Add(
                 new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = ".+[R][a][n][d][o][m].+[l][i][n][e].+" }
             );
 
             const string line = "$mt=\"*Random*line*\"";
 
             // Act
-            var result = sut.ProcessSearchLine(line);
+            var result = _sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
             Assert.NotNull(result);
-            Assert.True(SearchModelsEquals(result, expectedSearchModel));
+            Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
         [Fact]
         public void ProcessSearchLine_EscapeAsteriskAttributes()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
-            var expectedSearchModel = new SearchModel();
-            expectedSearchModel.Attributes.Add(
+            _expectedSearchModel.Attributes.Add(
                 new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = ".+[R][a][n][d][o][m][*][l][i][n][e].+" }
             );
 
             const string line = "$mt=\"*Random**line*\"";
 
             // Act
-            var result = sut.ProcessSearchLine(line);
+            var result = _sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
             Assert.NotNull(result);
-            Assert.True(SearchModelsEquals(result, expectedSearchModel));
+            Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
         [Fact]
         public void ProcessSearchLine_CustomAttributes()
         {
             // Arrange
-            var fixture = new Fixture();
-            fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            var sut = fixture.Create<ISearchLineHandler>();
-
-            var expectedSearchModel = new SearchModel
-            {
-                LineNumberStart = 1,
-                LineNumberEnd = 2,
-                LinesCountBefore = 3,
-                LinesCountAfter = 4,
-                DateBegin = "2022-02-22",
-                DateEnd = "2022-03-23",
-                Attributes = new List<SearchModel.Attribute>
-                {
-                    new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = "^[R][a][n][d][o][m][ ][l][i][n][e]$" },
-                }
-            };
+            _expectedSearchModel.LineNumberStart = 1;
+            _expectedSearchModel.LineNumberEnd = 2;
+            _expectedSearchModel.LinesCountBefore = 3;
+            _expectedSearchModel.LinesCountAfter = 4;
+            _expectedSearchModel.DateBegin = "2022-02-22";
+            _expectedSearchModel.DateEnd = "2022-03-23";
+            _expectedSearchModel.Attributes.Add(new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = "^[R][a][n][d][o][m][ ][l][i][n][e]$" });
 
             const string line = "$mt=\"Random line\" $lns=\"1\" $lne=\"2\" $lcb=\"3\" $lca=\"4\" $db=\"2022-02-22\" $de=\"2022-03-23\"";
 
             // Act
-            var result = sut.ProcessSearchLine(line);
+            var result = _sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
             Assert.NotNull(result);
-            Assert.True(SearchModelsEquals(result, expectedSearchModel));
+            Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
         public bool SearchModelsEquals(SearchModel first, SearchModel second)
