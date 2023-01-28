@@ -2,8 +2,9 @@
 
 namespace LogGrinder.Models
 {
-    internal class LogModel : Entity
+    public class LogModel
     {
+        public int Id { get; set; }
         public string? t { get; set; }
         public string? l { get; set; }
         public string? pid { get; set; }

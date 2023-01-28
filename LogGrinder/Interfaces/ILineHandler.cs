@@ -5,7 +5,7 @@ namespace LogGrinder.Interfaces
     /// <summary>
     /// Сервис обработки логов
     /// </summary>
-    internal interface ILineHandler
+    public interface ILineHandler
     {
         /// <summary>
         /// Преобразование модели в человекочитаемое текстовое сообщение

@@ -2,7 +2,7 @@
 
 namespace LogGrinder.Interfaces
 {
-    internal interface ISearchLineHandler
+    public interface ISearchLineHandler
     {
         /// <summary>
         /// Парсинг строки поиска в модель поиска

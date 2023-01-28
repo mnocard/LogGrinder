@@ -8,7 +8,7 @@ namespace LogGrinder.Interfaces
     /// <summary>
     /// Сервис поиска
     /// </summary>
-    internal interface ISearcher
+    public interface ISearcher
     {
         /// <summary>
         /// Поиск указанной строки в списке строк логов

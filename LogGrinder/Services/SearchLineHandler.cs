@@ -11,7 +11,7 @@ using LogGrinder.Models;
 
 namespace LogGrinder.Services
 {
-    internal class SearchLineHandler : ISearchLineHandler
+    public class SearchLineHandler : ISearchLineHandler
     {
         #region Constants
         private const string _dollar = "$";

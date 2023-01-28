@@ -2,7 +2,7 @@
 
 namespace LogGrinder.Models
 {
-    internal class SearchResult : Entity
+    public class SearchResult
     {
         private const string ColonWithSpace = ": ";
         private const string SearchViewConst = "{0}{3}{1}{3}результатов - {2}.";

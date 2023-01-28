@@ -15,7 +15,7 @@ using Serilog;
 
 namespace LogGrinder.Services
 {
-    internal class FileHandler : IFileHandler
+    public class FileHandler : IFileHandler
     {
         private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработке файла.";
         private const string _args = "args: ";

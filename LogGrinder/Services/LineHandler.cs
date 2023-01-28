@@ -9,7 +9,7 @@ using LogGrinder.Models;
 namespace LogGrinder.Services
 {
     /// <inheritdoc />
-    internal class LineHandler : ILineHandler
+    public class LineHandler : ILineHandler
     {
         private const string _newLine = "\\r\\n";
 

@@ -17,7 +17,7 @@ using Serilog;
 namespace LogGrinder.Services
 {
     /// <inheritdoc />
-    internal class Searcher : ISearcher
+    public class Searcher : ISearcher
     {
         private readonly IFileHandler _fileHandler;
         private readonly ISearchLineHandler _searchLineHandler;

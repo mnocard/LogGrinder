@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace LogGrinder.Models
 {
-    internal class SearchModel : INotifyPropertyChanged
+    public class SearchModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -44,7 +44,7 @@ namespace LogGrinder.Models
 
         public List<Attribute> Attributes { get; set; } = new();
 
-        internal class Attribute
+        public class Attribute
         {
             public string Name { get; set; }
             public bool Condition { get; set; }

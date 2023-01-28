@@ -8,7 +8,7 @@ namespace LogGrinder.Interfaces
     /// <summary>
     /// Сервис обработки файлов
     /// </summary>
-    internal interface IFileHandler
+    public interface IFileHandler
     {
         /// <summary>
         /// Извлечение из файла логов всех данных или только новых данных, если полное извлечение было произведено ранее, 
