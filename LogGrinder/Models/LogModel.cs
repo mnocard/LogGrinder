@@ -23,13 +23,7 @@
         public string? RawLine { get; set; }
         public string? FileName { get; set; }
 
-        public override bool Equals(object? obj)
-        {
-            if (obj is not LogModel)
-                return false;
-
-            return this.Equals(obj as LogModel);
-        }
+        public override bool Equals(object? obj) => obj is LogModel && this.Equals(obj as LogModel);
 
         public bool Equals(LogModel? obj)
         {
@@ -40,6 +34,21 @@
                 return true;
 
             return obj.FileName == FileName && obj.Id == Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode() ^ (FileName is not null ? FileName.GetHashCode() : 17);
+        }
+
+        public static bool operator ==(LogModel first, LogModel second)
+        {
+            return first is null ? second is null : first.Equals(second);
+        }
+
+        public static bool operator !=(LogModel first, LogModel second)
+        {
+            return !(first is null ? second is null : first.Equals(second));
         }
     }
 }
