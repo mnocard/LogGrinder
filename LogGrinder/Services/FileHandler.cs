@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -15,21 +14,15 @@ using Serilog;
 
 namespace LogGrinder.Services
 {
+    /// <inheritdoc />
     public class FileHandler : IFileHandler
     {
-        private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработке файла.";
-        private const string _args = "args: ";
-        private const string _ex = "ex: ";
-        private const string _cust = "cust: ";
-        private const string _span = "span: ";
         private int _lineNumber = 0;
         private long _fileSize = 0;
         private string _fileName = string.Empty;
         private readonly ILogger _log = Log.ForContext<FileHandler>();
         private CancellationTokenSource tokenSource;
         private CancellationToken token;
-
-        public FileHandler() { }
 
         /// <inheritdoc />
         public async Task<List<LogModel>> ConvertFileToView(string filePath)
@@ -148,5 +141,13 @@ namespace LogGrinder.Services
             if (!string.IsNullOrEmpty(filePath))
                 model.FileName = Path.GetFileNameWithoutExtension(filePath);
         }
+
+        #region Константы
+        private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработать файл.";
+        private const string _args = "args: ";
+        private const string _ex = "ex: ";
+        private const string _cust = "cust: ";
+        private const string _span = "span: ";
+        #endregion
     }
 }

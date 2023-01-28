@@ -9,31 +9,9 @@ using LogGrinder.Models;
 
 namespace LogGrinder.Services
 {
+    /// <inheritdoc />
     public class SearchLineHandler : ISearchLineHandler
     {
-        #region Constants
-        private const string _dollar = "$";
-        private const string _splitLinePattern = "([$][\\S]+=)";
-        private const string _checkLinePattern = "[$].+(=\"+|=-\"+).+[\"]$";
-        private const string _asterisk = "*";
-        private const string _doubleAsterisk = "**";
-        private const string _replacementMarks = "~!@#$%^&8()_+";
-        private const string _anyChars = ".+";
-        private const char _equals = '=';
-        private const char _minus = '-';
-        private const char _openBracket = '[';
-        private const char _closedBracket = ']';
-        private const char _startWith = '^';
-        private const char _endWith = '$';
-
-        private const string _dateBegin = "db";
-        private const string _dateEnd = "de";
-        private const string _linesCountAfter = "lca";
-        private const string _linesCountBefore = "lcb";
-        private const string _linesNumberStart = "lns";
-        private const string _linesNumberEnd = "lne";
-        #endregion
-
         /// <inheritdoc />
         public SearchModel ProcessSearchLine(string line)
         {
@@ -202,5 +180,29 @@ namespace LogGrinder.Services
             if (quotationMarksCount % 2 != 0)
                 throw new ArgumentException("Строка содержит неэкраннированную двойную кавычку.");
         }
+
+        #region Constants
+        private const string _dollar = "$";
+        private const string _splitLinePattern = "([$][\\S]+=)";
+        private const string _checkLinePattern = "[$].+(=\"+|=-\"+).+[\"]$";
+        private const string _asterisk = "*";
+        private const string _doubleAsterisk = "**";
+        private const string _replacementMarks = "~!@#$%^&8()_+";
+        private const string _anyChars = ".+";
+        private const char _equals = '=';
+        private const char _minus = '-';
+        private const char _openBracket = '[';
+        private const char _closedBracket = ']';
+        private const char _startWith = '^';
+        private const char _endWith = '$';
+
+        private const string _dateBegin = "db";
+        private const string _dateEnd = "de";
+        private const string _linesCountAfter = "lca";
+        private const string _linesCountBefore = "lcb";
+        private const string _linesNumberStart = "lns";
+        private const string _linesNumberEnd = "lne";
+        #endregion
+
     }
 }

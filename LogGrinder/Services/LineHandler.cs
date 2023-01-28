@@ -11,29 +11,6 @@ namespace LogGrinder.Services
     /// <inheritdoc />
     public class LineHandler : ILineHandler
     {
-        private const string _newLine = "\\r\\n";
-
-        private const string _fn = "Название файла: ";
-        private const string _n = "Номер строки: ";
-        private const string _t = "Время (t): ";
-        private const string _l = "Уровень (l): ";
-        private const string _mt = "Сообщение (mt): ";
-        private const string _args = "Аргументы сообщения (args):\n";
-        private const string _tr = "Информация о трассировке (tr): ";
-        private const string _un = "Учетная запись пользователя (un): ";
-        private const string _tn = "Код системы (tn): ";
-        private const string _v = "Версия (v): ";
-        private const string _lg = "Название логгера (lg): ";
-        private const string _bn = "Название браузера (bn): ";
-        private const string _bv = "Версия браузера (bv): ";
-        private const string _tab = "Идентификатор вкладки браузера (tab): ";
-        private const string _pid = "Идентификатор процесса (pid): ";
-        private const string _ex = "Информация об исключении (ex):\n";
-        private const string _span = "Время выполнения действий (span):\n";
-        private const string _cust = "Прочие сведения (cust):\n";
-        private const string _raw = "Непреобразованная json строка:\n";
-
-
         /// <inheritdoc />
         public string ProcessSelectedLine(LogModel logModel)
         {
@@ -109,5 +86,30 @@ namespace LogGrinder.Services
         /// <param name="useBeautifier">Необходимость преобразования в читаемую json-форматированную строку</param>
         /// <returns>Полученная строка</returns>
         private string ProcessAttribute(string attributePrefix, object attribute, bool useBeautifier) => attribute != null ? ProcessAttribute(attributePrefix, attribute.ToString(), useBeautifier) : string.Empty;
+
+        #region Константы
+        private const string _newLine = "\\r\\n";
+
+        private const string _fn = "Название файла: ";
+        private const string _n = "Номер строки: ";
+        private const string _t = "Время (t): ";
+        private const string _l = "Уровень (l): ";
+        private const string _mt = "Сообщение (mt): ";
+        private const string _args = "Аргументы сообщения (args):\n";
+        private const string _tr = "Информация о трассировке (tr): ";
+        private const string _un = "Учетная запись пользователя (un): ";
+        private const string _tn = "Код системы (tn): ";
+        private const string _v = "Версия (v): ";
+        private const string _lg = "Название логгера (lg): ";
+        private const string _bn = "Название браузера (bn): ";
+        private const string _bv = "Версия браузера (bv): ";
+        private const string _tab = "Идентификатор вкладки браузера (tab): ";
+        private const string _pid = "Идентификатор процесса (pid): ";
+        private const string _ex = "Информация об исключении (ex):\n";
+        private const string _span = "Время выполнения действий (span):\n";
+        private const string _cust = "Прочие сведения (cust):\n";
+        private const string _raw = "Непреобразованная json строка:\n";
+        #endregion
+
     }
 }

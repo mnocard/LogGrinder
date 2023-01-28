@@ -480,10 +480,12 @@ namespace LogGrinder.Services
 
         private bool SearchInAttribute(object attribute, string searchLine) => attribute != null ? SearchInAttribute(attribute.ToString(), searchLine) : false;
 
+        #region Константы
         private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработке файла.";
         private const char _dollar = '$';
         private const string _anyChars = ".+";
 
         private const string _any = "any";
+        #endregion
     }
 }

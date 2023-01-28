@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace LogGrinder.Models
+﻿namespace LogGrinder.Models
 {
     public class LogModel
     {

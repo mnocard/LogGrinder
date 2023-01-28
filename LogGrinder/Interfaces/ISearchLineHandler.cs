@@ -2,6 +2,9 @@
 
 namespace LogGrinder.Interfaces
 {
+    /// <summary>
+    /// Сервис обработки строки поиска в поиск по атрибутам
+    /// </summary>
     public interface ISearchLineHandler
     {
         /// <summary>
