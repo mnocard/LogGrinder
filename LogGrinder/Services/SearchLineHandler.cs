@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using LogGrinder.Interfaces;
 
@@ -19,7 +17,7 @@ namespace LogGrinder.Services
         private const string _checkLinePattern = "[$].+(=\"+|=-\"+).+[\"]$";
         private const string _asterisk = "*";
         private const string _doubleAsterisk = "**";
-        private const string _replacementMarks = "~!@#$%^&*()_+";
+        private const string _replacementMarks = "~!@#$%^&8()_+";
         private const string _anyChars = ".+";
         private const char _equals = '=';
         private const char _minus = '-';
@@ -197,9 +195,6 @@ namespace LogGrinder.Services
         /// <exception cref="ArgumentException"></exception>
         private void CheckLine(string line)
         {
-            if (string.IsNullOrWhiteSpace(line))
-                throw new ArgumentException("Строка пустая.");
-
             if (!Regex.IsMatch(line, _checkLinePattern))
                 throw new ArgumentException("Строка не соответствует шаблону.");
 
