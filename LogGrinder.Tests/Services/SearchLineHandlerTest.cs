@@ -6,7 +6,7 @@
 
         [Theory]
         [AutoDomainData]
-        public void ProcessSearchLine_ArgumentException_StringIsEmpty(SearchLineHandler sut)
+        public void ProcessSearchLine_StringIsEmpty_ArgumentException(SearchLineHandler sut)
         {
             // Arrange
             const string exceptionText = "Строка не соответствует шаблону.";
@@ -24,7 +24,7 @@
 
         [Theory]
         [AutoDomainData]
-        public void ProcessSearchLine_ArgumentException_EscapeQuotes(SearchLineHandler sut)
+        public void ProcessSearchLine_EscapeQuotes_ArgumentException(SearchLineHandler sut)
         {
             // Arrange
             const string exceptionText = "Строка содержит неэкраннированную двойную кавычку.";
