@@ -824,7 +824,6 @@ namespace LogGrinder.ViewModels
                     StatusChanging(StatusNotFound);
 
             }
-            catch (OperationCanceledException) { StatusChanging(StatusSearchStop); }
             catch (Exception e) { StatusChanging(e); }
 
             ButtonAdvancedSearch = SearchIcon;

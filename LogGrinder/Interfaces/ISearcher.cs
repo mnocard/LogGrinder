@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using LogGrinder.Models;
@@ -8,7 +9,7 @@ namespace LogGrinder.Interfaces
     /// <summary>
     /// Сервис поиска
     /// </summary>
-    public interface ISearcher
+    public interface ISearcher : IDisposable
     {
         /// <summary>
         /// Поиск указанной строки в списке строк логов

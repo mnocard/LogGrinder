@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using LogGrinder.Models;
@@ -8,7 +9,7 @@ namespace LogGrinder.Interfaces
     /// <summary>
     /// Сервис обработки файлов
     /// </summary>
-    public interface IFileHandler
+    public interface IFileHandler : IDisposable
     {
         /// <summary>
         /// Извлечение из файла логов всех данных или только новых данных, если полное извлечение было произведено ранее, 

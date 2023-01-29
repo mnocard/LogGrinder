@@ -95,7 +95,7 @@ namespace LogGrinder.Services
                 while ((jsonString = file.ReadLine()) != null)
                 {
                     if (_token.IsCancellationRequested)
-                        _token.ThrowIfCancellationRequested();
+                        break;
 
                     byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
                     using MemoryStream openStream = new(bytes);
@@ -119,10 +119,6 @@ namespace LogGrinder.Services
                 result.ResultsWithNearestLines = result.ResultsWithNearestLines.Distinct().ToList();
 
                 return result;
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
             }
             catch (Exception ex)
             {
@@ -216,10 +212,7 @@ namespace LogGrinder.Services
         public void CancelSearching()
         {
             if (_tokenSource != null)
-            {
                 _tokenSource.Cancel();
-                _tokenSource.Dispose();
-            }
         }
 
         /// <summary>
@@ -481,6 +474,12 @@ namespace LogGrinder.Services
         }
 
         private bool SearchInAttribute(object attribute, string searchLine) => attribute != null ? SearchInAttribute(attribute.ToString(), searchLine) : false;
+
+        public void Dispose()
+        {
+            if (_tokenSource != null)
+                _tokenSource.Dispose();
+        }
 
         #region Константы
         private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработке файла.";

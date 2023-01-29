@@ -131,6 +131,12 @@ namespace LogGrinder.Services
                 model.FileName = Path.GetFileNameWithoutExtension(filePath);
         }
 
+        public void Dispose()
+        {
+            if (_tokenSource != null)
+                _tokenSource.Dispose();
+        }
+
         #region Константы
         private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработать файл.";
         private const string _args = "args: ";
