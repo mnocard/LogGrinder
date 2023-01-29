@@ -2,27 +2,18 @@
 {
     public class SearchLineHandlerTest
     {
-        private readonly Fixture _fixture;
-        private readonly ISearchLineHandler _sut;
-        private readonly SearchModel _expectedSearchModel;
+        private readonly SearchModel _expectedSearchModel = new SearchModel();
 
-        public SearchLineHandlerTest()
-        {
-            _fixture = new Fixture();
-            _fixture.Register<ISearchLineHandler>(() => new SearchLineHandler());
-            _sut = _fixture.Create<ISearchLineHandler>();
-            _expectedSearchModel = new SearchModel();
-        }
-
-        [Fact]
-        public void ProcessSearchLine_ArgumentException_StringIsEmpty()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_ArgumentException_StringIsEmpty(SearchLineHandler sut)
         {
             // Arrange
             const string exceptionText = "Строка не соответствует шаблону.";
             const string line = "Random line";
 
             // Act
-            Action act = () => _sut.ProcessSearchLine(line);
+            Action act = () => sut.ProcessSearchLine(line);
             var exception = Record.Exception(act);
 
             // Assert
@@ -31,15 +22,16 @@
             Assert.Equal(exceptionText, exception.Message);
         }
 
-        [Fact]
-        public void ProcessSearchLine_ArgumentException_EscapeQuotes()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_ArgumentException_EscapeQuotes(SearchLineHandler sut)
         {
             // Arrange
             const string exceptionText = "Строка содержит неэкраннированную двойную кавычку.";
             const string line = "$mt=\"Quote \" line\"";
 
             // Act
-            Action act = () => _sut.ProcessSearchLine(line);
+            Action act = () => sut.ProcessSearchLine(line);
             var exception = Record.Exception(act);
 
             // Assert
@@ -49,8 +41,9 @@
         }
 
 
-        [Fact]
-        public void ProcessSearchLine_2DifferentUnitedAttributes()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_2DifferentUnitedAttributes(SearchLineHandler sut)
         {
             // Arrange
             _expectedSearchModel.Attributes.AddRange(new[] {
@@ -61,7 +54,7 @@
             const string line = "$mt$t=\"Random line\"";
 
             // Act
-            var result = _sut.ProcessSearchLine(line);
+            var result = sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
@@ -69,8 +62,9 @@
             Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
-        [Fact]
-        public void ProcessSearchLine_2SameSplittedAttributes()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_2SameSplittedAttributes(SearchLineHandler sut)
         {
             // Arrange
             _expectedSearchModel.Attributes.AddRange(new[] {
@@ -81,7 +75,7 @@
             const string line = "$mt=\"First line\" $mt=\"Second line\"";
 
             // Act
-            var result = _sut.ProcessSearchLine(line);
+            var result = sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
@@ -89,8 +83,9 @@
             Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
-        [Fact]
-        public void ProcessSearchLine_ExcludeAttributes()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_ExcludeAttributes(SearchLineHandler sut)
         {
             // Arrange
             _expectedSearchModel.Attributes.AddRange(new[] {
@@ -101,7 +96,7 @@
             const string line = "$mt=\"First line\" $mt=-\"Second line\"";
 
             // Act
-            var result = _sut.ProcessSearchLine(line);
+            var result = sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
@@ -109,8 +104,9 @@
             Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
-        [Fact]
-        public void ProcessSearchLine_AsteriskAttributes()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_AsteriskAttributes(SearchLineHandler sut)
         {
             // Arrange
             _expectedSearchModel.Attributes.Add(
@@ -120,7 +116,7 @@
             const string line = "$mt=\"*Random*line*\"";
 
             // Act
-            var result = _sut.ProcessSearchLine(line);
+            var result = sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
@@ -128,8 +124,9 @@
             Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
-        [Fact]
-        public void ProcessSearchLine_EscapeAsteriskAttributes()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_EscapeAsteriskAttributes(SearchLineHandler sut)
         {
             // Arrange
             _expectedSearchModel.Attributes.Add(
@@ -139,7 +136,7 @@
             const string line = "$mt=\"*Random**line*\"";
 
             // Act
-            var result = _sut.ProcessSearchLine(line);
+            var result = sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
@@ -147,22 +144,31 @@
             Assert.True(SearchModelsEquals(result, _expectedSearchModel));
         }
 
-        [Fact]
-        public void ProcessSearchLine_CustomAttributes()
+        [Theory]
+        [AutoDomainData]
+        public void ProcessSearchLine_CustomAttributes(SearchLineHandler sut)
         {
             // Arrange
-            _expectedSearchModel.LineNumberStart = 1;
-            _expectedSearchModel.LineNumberEnd = 2;
-            _expectedSearchModel.LinesCountBefore = 3;
-            _expectedSearchModel.LinesCountAfter = 4;
-            _expectedSearchModel.DateBegin = "2022-02-22";
-            _expectedSearchModel.DateEnd = "2022-03-23";
+            var fixture = new Fixture();
+            _expectedSearchModel.LineNumberStart = fixture.Create<int>();
+            _expectedSearchModel.LineNumberEnd = fixture.Create<int>();
+            _expectedSearchModel.LinesCountBefore = fixture.Create<int>();
+            _expectedSearchModel.LinesCountAfter = fixture.Create<int>();
+            _expectedSearchModel.DateBegin = fixture.Create<DateTime>().ToString();
+            _expectedSearchModel.DateEnd = fixture.Create<DateTime>().ToString();
             _expectedSearchModel.Attributes.Add(new SearchModel.Attribute { Condition = true, Name = "mt", SearchLinePattern = "^[R][a][n][d][o][m][ ][l][i][n][e]$" });
 
-            const string line = "$mt=\"Random line\" $lns=\"1\" $lne=\"2\" $lcb=\"3\" $lca=\"4\" $db=\"2022-02-22\" $de=\"2022-03-23\"";
+            var line = string.Format(
+                "$mt=\"Random line\" $lns=\"{0}\" $lne=\"{1}\" $lcb=\"{2}\" $lca=\"{3}\" $db=\"{4}\" $de=\"{5}\"",
+                _expectedSearchModel.LineNumberStart,
+                _expectedSearchModel.LineNumberEnd,
+                _expectedSearchModel.LinesCountBefore,
+                _expectedSearchModel.LinesCountAfter,
+                _expectedSearchModel.DateBegin,
+                _expectedSearchModel.DateEnd);
 
             // Act
-            var result = _sut.ProcessSearchLine(line);
+            var result = sut.ProcessSearchLine(line);
 
             // Assert
             Assert.IsType<SearchModel>(result);
