@@ -24,11 +24,13 @@ namespace LogGrinder.ViewModels
         #region MainWindowViewModel : Конструктор
         public MainWindowViewModel(ILineHandler lineHandler,
                                    ISearcher searcher,
-                                   IFileHandler fileHandler)
+                                   IFileHandler fileHandler,
+                                   IFileManager fileManager)
         {
             _lineHandler = lineHandler;
             _searcher = searcher;
             _fileHandler = fileHandler;
+            _fileManager = fileManager;
         }
         #endregion
 
@@ -626,7 +628,7 @@ namespace LogGrinder.ViewModels
 
                 if (result == 1)
                 {
-                    _fileHandler.ResetFileHandlerState();
+                    _fileManager.ResetState();
                     await ProcessLogFile(CurrentLogFileItem);
                 }
                 else if (result == 2)
@@ -1048,6 +1050,7 @@ namespace LogGrinder.ViewModels
 
         #region Сервисы
 
+        private readonly IFileManager _fileManager;
         private readonly IFileHandler _fileHandler;
         private readonly ILineHandler _lineHandler;
         private readonly ISearcher _searcher;

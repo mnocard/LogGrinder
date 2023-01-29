@@ -22,10 +22,6 @@ namespace LogGrinder.Interfaces
         /// </summary>
         void CancelFileProcessing();
         /// <summary>
-        /// Сброс состояния сервиса обработки файлов
-        /// </summary>
-        void ResetFileHandlerState();
-        /// <summary>
         /// Заполнить дополнительные атрибуты
         /// </summary>
         /// <param name="model">Модель строки лога, в которую необходимо внести дополнительные атрибуты</param>

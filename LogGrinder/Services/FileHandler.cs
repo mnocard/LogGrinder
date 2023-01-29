@@ -17,26 +17,22 @@ namespace LogGrinder.Services
     /// <inheritdoc />
     public class FileHandler : IFileHandler
     {
-        private int _lineNumber = 0;
-        private long _fileSize = 0;
-        private string _fileName = string.Empty;
         private readonly ILogger _log = Log.ForContext<FileHandler>();
         private readonly IFileManager _fileManager;
-        private CancellationTokenSource tokenSource;
-        private CancellationToken token;
+        private CancellationTokenSource _tokenSource;
+        private CancellationToken _token;
 
         public FileHandler(IFileManager fileManager) => _fileManager = fileManager;
-
 
         /// <inheritdoc />
         public async Task<List<LogModel>> ConvertFileToView(string filePath)
         {
-            tokenSource = new CancellationTokenSource();
-            token = tokenSource.Token;
+            _tokenSource = new CancellationTokenSource();
+            _token = _tokenSource.Token;
 
             var rawLogLines = new List<LogModel>();
             string? jsonString;
-            bool isSameFile = _fileName == filePath;
+            bool isSameFile = _fileManager.FileName == filePath;
 
             if (string.IsNullOrEmpty(filePath))
                 return rawLogLines;
@@ -55,7 +51,7 @@ namespace LogGrinder.Services
                 // Повторная обработка того же самого файла
                 if (isSameFile)
                 {
-                    var newData = file.BaseStream.Length - _fileSize;
+                    var newData = file.BaseStream.Length - _fileManager.FileSize;
                     // Если размер файла увеличился, то устанавливаем позицию чтения на количество добавленных байт с конца.
                     // В общем, обрабатываем, только новые данные
                     // Если размер файла уменьшился, то запоминаем новый размер и прекращаем обработку файла
@@ -63,17 +59,17 @@ namespace LogGrinder.Services
                         file.BaseStream.Seek(-newData, SeekOrigin.End);
                     else
                     {
-                        _fileSize = file.BaseStream.Length;
+                        _fileManager.FileSize = file.BaseStream.Length;
                         return rawLogLines;
                     }
                 }
                 else
-                    _lineNumber = 0;
+                    _fileManager.LineNumber = 0;
 
-                var counter = _lineNumber;
+                var counter = _fileManager.LineNumber;
                 while ((jsonString = file.ReadLine()) != null)
                 {
-                    if (token.IsCancellationRequested)
+                    if (_token.IsCancellationRequested)
                         break;
 
                     byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
@@ -92,9 +88,9 @@ namespace LogGrinder.Services
                     }
                 }
 
-                _lineNumber = counter;
-                _fileSize = file.BaseStream.Length;
-                _fileName = filePath;
+                _fileManager.LineNumber = counter;
+                _fileManager.FileSize = file.BaseStream.Length;
+                _fileManager.FileName = filePath;
                 return rawLogLines;
             }
             catch (Exception ex)
@@ -107,19 +103,8 @@ namespace LogGrinder.Services
         /// <inheritdoc />
         public void CancelFileProcessing()
         {
-            if (tokenSource != null)
-            {
-                tokenSource.Cancel();
-                tokenSource.Dispose();
-            }
-        }
-
-        /// <inheritdoc />
-        public void ResetFileHandlerState()
-        {
-            _fileSize = 0;
-            _lineNumber = 0;
-            _fileName = string.Empty;
+            if (_tokenSource != null)
+                _tokenSource.Cancel();
         }
 
         /// <inheritdoc />

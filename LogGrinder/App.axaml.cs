@@ -60,11 +60,12 @@ namespace LogGrinder
             services.AddSingleton<MainWindowViewModel>();
             services.AddSingleton<SearchWindowViewModel>();
             services.AddSingleton<InfoWindowViewModel>();
-            services.AddSingleton<IFileHandler, FileHandler>();
+            services.AddSingleton<IFileManager, FileManager>();
+
+            services.AddTransient<IFileHandler, FileHandler>();
             services.AddTransient<ILineHandler, LineHandler>();
             services.AddTransient<ISearcher, Searcher>();
             services.AddTransient<ISearchLineHandler, SearchLineHandler>();
-            services.AddTransient<IFileManager, FileManager>();
         }
     }
 }
