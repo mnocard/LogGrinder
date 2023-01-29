@@ -4,7 +4,7 @@ using LogGrinder.Interfaces;
 
 namespace LogGrinder.Services
 {
-    internal class FileManager : IFileManager
+    public class FileManager : IFileManager
     {
         public StreamReader StreamReader(string path) => new StreamReader(path);
 
