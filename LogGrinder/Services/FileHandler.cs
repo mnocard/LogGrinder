@@ -19,17 +19,12 @@ namespace LogGrinder.Services
     {
         private readonly ILogger _log = Log.ForContext<FileHandler>();
         private readonly IFileManager _fileManager;
-        private CancellationTokenSource _tokenSource;
-        private CancellationToken _token;
 
         public FileHandler(IFileManager fileManager) => _fileManager = fileManager;
 
         /// <inheritdoc />
-        public async Task<List<LogModel>> ConvertFileToView(string filePath)
+        public async Task<List<LogModel>> ConvertFileToView(string filePath, CancellationToken token = default)
         {
-            _tokenSource = new CancellationTokenSource();
-            _token = _tokenSource.Token;
-
             var rawLogLines = new List<LogModel>();
             string? jsonString;
             bool isSameFile = _fileManager.FileName == filePath;
@@ -69,8 +64,8 @@ namespace LogGrinder.Services
                 var counter = _fileManager.LineNumber;
                 while ((jsonString = file.ReadLine()) != null)
                 {
-                    if (_token.IsCancellationRequested)
-                        break;
+                    if (token.IsCancellationRequested)
+                        token.ThrowIfCancellationRequested();
 
                     byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
                     using MemoryStream openStream = new(bytes);
@@ -93,18 +88,15 @@ namespace LogGrinder.Services
                 _fileManager.FileName = filePath;
                 return rawLogLines;
             }
+            catch (OperationCanceledException)
+            {
+                return rawLogLines;
+            }
             catch (Exception ex)
             {
                 _log.Error(ex, LogUnhandledError);
                 throw;
             }
-        }
-
-        /// <inheritdoc />
-        public void CancelFileProcessing()
-        {
-            if (_tokenSource != null)
-                _tokenSource.Cancel();
         }
 
         /// <inheritdoc />
@@ -129,12 +121,6 @@ namespace LogGrinder.Services
 
             if (!string.IsNullOrEmpty(filePath))
                 model.FileName = Path.GetFileNameWithoutExtension(filePath);
-        }
-
-        public void Dispose()
-        {
-            if (_tokenSource != null)
-                _tokenSource.Dispose();
         }
 
         #region Константы

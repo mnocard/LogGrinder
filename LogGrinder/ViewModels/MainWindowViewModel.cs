@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia;
@@ -271,7 +272,7 @@ namespace LogGrinder.ViewModels
             {
                 if (ButtonOpenFolderIcon == StopIcon)
                 {
-                    _fileHandler.CancelFileProcessing();
+                    _TokenSource.Cancel();
                     StatusChanging(StatusProcessingFileStopped);
                     return;
                 }
@@ -731,10 +732,17 @@ namespace LogGrinder.ViewModels
                     }
 
                     var newLines = new List<LogModel>();
-                    await Task.Run(async () =>
+                    try
                     {
-                        newLines = await _fileHandler.ConvertFileToView(currentLogFile);
-                    });
+                        _TokenSource = new CancellationTokenSource();
+                        var token = _TokenSource.Token;
+                        await Task.Run(async () =>
+                        {
+                            newLines = await _fileHandler.ConvertFileToView(currentLogFile, token);
+                        });
+                    }
+                    catch (Exception e) { StatusChanging(e); }
+                    finally { _TokenSource.Dispose(); }
 
                     if (newLines.Any())
                     {
@@ -1068,7 +1076,8 @@ namespace LogGrinder.ViewModels
         private bool _IsFileOnView = false;
         /// <summary>Необходимость показать в датагриде результаты поиска</summary>
         private bool _IsNeedToShowSearchResults = true;
-
+        /// <summary>Опеератор токена для остановки асинхронных процессов</summary>
+        private CancellationTokenSource _TokenSource;
         #endregion
 
         #endregion

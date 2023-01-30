@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using LogGrinder.Models;
@@ -9,7 +9,7 @@ namespace LogGrinder.Interfaces
     /// <summary>
     /// Сервис обработки файлов
     /// </summary>
-    public interface IFileHandler : IDisposable
+    public interface IFileHandler
     {
         /// <summary>
         /// Извлечение из файла логов всех данных или только новых данных, если полное извлечение было произведено ранее, 
@@ -17,11 +17,7 @@ namespace LogGrinder.Interfaces
         /// </summary>
         /// <param name="filePath">Расположение файла логов</param>
         /// <returns>Список моделей логов, предназначенная для отображения данных</returns>
-        Task<List<LogModel>> ConvertFileToView(string filePath);
-        /// <summary>
-        /// Остановка обработки файла логов
-        /// </summary>
-        void CancelFileProcessing();
+        Task<List<LogModel>> ConvertFileToView(string filePath, CancellationToken _token = default);
         /// <summary>
         /// Заполнить дополнительные атрибуты
         /// </summary>
