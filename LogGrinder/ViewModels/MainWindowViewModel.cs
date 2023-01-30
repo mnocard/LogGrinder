@@ -580,7 +580,7 @@ namespace LogGrinder.ViewModels
         /// Показать загруженный файл в датагриде
         /// </summary>
         /// <returns></returns>
-        public async Task ShowLogLinesBackup(object parameter)
+        public async Task ShowLogLinesBackup()
         {
             if (LogLinesBackup.Any() && !_IsFileOnView)
             {
@@ -670,7 +670,7 @@ namespace LogGrinder.ViewModels
                 var logLine = SelectedLogLine;
 
                 if (SelectedLogLine.FileName == CurrentLogFileItem)
-                    await ShowLogLinesBackup(parameter);
+                    await ShowLogLinesBackup();
                 else
                     CurrentLogFileItem = SelectedLogLine.FileName;
 
@@ -738,9 +738,11 @@ namespace LogGrinder.ViewModels
                         var token = _TokenSource.Token;
                         await Task.Run(async () =>
                         {
-                            newLines = await _fileHandler.ConvertFileToView(currentLogFile, token);
+                            await foreach (var line in _fileHandler.ConvertFileToView(currentLogFile, token))
+                                newLines.Add(line);
                         });
                     }
+                    catch (OperationCanceledException) { }
                     catch (Exception e) { StatusChanging(e); }
                     finally { _TokenSource.Dispose(); }
 
@@ -1032,8 +1034,6 @@ namespace LogGrinder.ViewModels
         private const string StatusSearchingMatchWith = "Ищем совпадение со строкой ";
         private const string StatusChooseLogFile = "Сначала выберите файл логов.";
         private const string StatusChooseSearchResultFromList = "Выберите результат поиска из выпадающего списка.";
-        private const string StatusShowSearchResults = "Отобразите результаты поиска по кнопке \"Показать выбранный результат поиска\".";
-        private const string StatusSearchStop = "Остановка поиска.";
         #endregion
 
         #region Иконки кнопок

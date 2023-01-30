@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 
 using LogGrinder.Models;
 
@@ -17,7 +16,7 @@ namespace LogGrinder.Interfaces
         /// </summary>
         /// <param name="filePath">Расположение файла логов</param>
         /// <returns>Список моделей логов, предназначенная для отображения данных</returns>
-        Task<List<LogModel>> ConvertFileToView(string filePath, CancellationToken _token = default);
+        IAsyncEnumerable<LogModel> ConvertFileToView(string filePath, CancellationToken _token = default);
         /// <summary>
         /// Заполнить дополнительные атрибуты
         /// </summary>
