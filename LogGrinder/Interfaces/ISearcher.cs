@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using LogGrinder.Models;
@@ -9,7 +9,7 @@ namespace LogGrinder.Interfaces
     /// <summary>
     /// Сервис поиска
     /// </summary>
-    public interface ISearcher : IDisposable
+    public interface ISearcher
     {
         /// <summary>
         /// Поиск указанной строки в списке строк логов
@@ -17,17 +17,13 @@ namespace LogGrinder.Interfaces
         /// <param name="models">Список строк логов, в которых осуществляется поиск</param>
         /// <param name="option">Настройки поиска</param>
         /// <returns>Результаты поиска</returns>
-        Task<SearchResult> SearchInOpenedFile(IEnumerable<LogModel> models, SearchModel option);
+        Task<SearchResult> SearchInOpenedFile(IEnumerable<LogModel> models, SearchModel option, CancellationToken token = default);
         /// <summary>
         /// Поиск указанной строки в указанном файле лога
         /// </summary>
         /// <param name="filePath">Файл лога, в которых осуществляется поиск</param>
         /// <param name="option">Настройки поиска</param>
         /// <returns>Результаты поиска</returns>
-        Task<SearchResult> SearchInFile(string filePath, SearchModel option);
-        /// <summary>
-        /// Остановка поиска
-        /// </summary>
-        void CancelSearching();
+        Task<SearchResult> SearchInFile(string filePath, SearchModel option, CancellationToken token = default);
     }
 }

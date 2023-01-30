@@ -12,19 +12,14 @@ using LogGrinder.Interfaces;
 
 using LogGrinder.Models;
 
-using Serilog;
-
 namespace LogGrinder.Services
 {
     /// <inheritdoc />
     public class Searcher : ISearcher
     {
+        private readonly IFileManager _fileManager;
         private readonly IFileHandler _fileHandler;
         private readonly ISearchLineHandler _searchLineHandler;
-        private readonly ILogger _log = Log.ForContext<Searcher>();
-        private readonly IFileManager _fileManager;
-        private CancellationTokenSource _tokenSource;
-        private CancellationToken _token;
 
         public Searcher(ISearchLineHandler searchLineHandler, IFileHandler fileHandler, IFileManager fileManager)
         {
@@ -34,11 +29,8 @@ namespace LogGrinder.Services
         }
 
         /// <inheritdoc />
-        public async Task<SearchResult> SearchInOpenedFile(IEnumerable<LogModel> models, SearchModel option)
+        public async Task<SearchResult> SearchInOpenedFile(IEnumerable<LogModel> models, SearchModel option, CancellationToken token = default)
         {
-            _tokenSource = new CancellationTokenSource();
-            _token = _tokenSource.Token;
-
             var result = new SearchResult();
             var linesBefore = new Queue<LogModel>();
             var linesAfter = new Queue<LogModel>();
@@ -51,8 +43,8 @@ namespace LogGrinder.Services
             {
                 foreach (var model in models)
                 {
-                    if (_token.IsCancellationRequested)
-                        break;
+                    if (token.IsCancellationRequested)
+                        token.ThrowIfCancellationRequested();
 
                     SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
                 }
@@ -61,17 +53,14 @@ namespace LogGrinder.Services
                     result.ResultsWithNearestLines.AddRange(linesAfter);
 
                 result.ResultsWithNearestLines = result.ResultsWithNearestLines.Distinct().ToList();
-            });
+            }, token);
 
             return result;
         }
 
         /// <inheritdoc />
-        public async Task<SearchResult> SearchInFile(string filePath, SearchModel option)
+        public async Task<SearchResult> SearchInFile(string filePath, SearchModel option, CancellationToken token = default)
         {
-            _tokenSource = new CancellationTokenSource();
-            _token = _tokenSource.Token;
-
             var result = new SearchResult();
             var linesBefore = new Queue<LogModel>();
             var linesAfter = new Queue<LogModel>();
@@ -82,49 +71,41 @@ namespace LogGrinder.Services
             if (string.IsNullOrEmpty(filePath) || string.IsNullOrEmpty(option.SearchLine))
                 return result;
 
-            try
+            var fileReadingOptionns = new FileStreamOptions
             {
-                var fileReadingOptionns = new FileStreamOptions
+                Access = FileAccess.Read,
+                Mode = FileMode.Open,
+                Share = FileShare.ReadWrite,
+            };
+
+            using var file = _fileManager.StreamReader(filePath, fileReadingOptionns);
+            while ((jsonString = file.ReadLine()) != null)
+            {
+                if (token.IsCancellationRequested)
+                    token.ThrowIfCancellationRequested();
+
+                byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
+                using MemoryStream openStream = new(bytes);
+
+                var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream, cancellationToken: token);
+
+                if (model != null)
                 {
-                    Access = FileAccess.Read,
-                    Mode = FileMode.Open,
-                    Share = FileShare.ReadWrite,
-                };
+                    counter++;
+                    model.Id = counter;
+                    SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
 
-                using var file = _fileManager.StreamReader(filePath, fileReadingOptionns);
-                while ((jsonString = file.ReadLine()) != null)
-                {
-                    if (_token.IsCancellationRequested)
-                        break;
-
-                    byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
-                    using MemoryStream openStream = new(bytes);
-
-                    var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream);
-
-                    if (model != null)
-                    {
-                        counter++;
-                        model.Id = counter;
-                        SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
-
-                        _fileHandler.AddCustomAttributes(ref model, jsonString, filePath);
-                    }
+                    _fileHandler.AddCustomAttributes(ref model, jsonString, filePath);
                 }
-
-                // если ПОСТочередь не заполнилась, то всё равно надо слить остатки в результаты
-                if (option.LinesCountAfter > 0 && linesAfter.Any())
-                    result.ResultsWithNearestLines.AddRange(linesAfter);
-
-                result.ResultsWithNearestLines = result.ResultsWithNearestLines.Distinct().ToList();
-
-                return result;
             }
-            catch (Exception ex)
-            {
-                _log.Error(ex, LogUnhandledError);
-                throw;
-            }
+
+            // если ПОСТочередь не заполнилась, то всё равно надо слить остатки в результаты
+            if (option.LinesCountAfter > 0 && linesAfter.Any())
+                result.ResultsWithNearestLines.AddRange(linesAfter);
+
+            result.ResultsWithNearestLines = result.ResultsWithNearestLines.Distinct().ToList();
+
+            return result;
         }
 
         /// <summary>
@@ -206,13 +187,6 @@ namespace LogGrinder.Services
                     startCollectLinesAfter = false;
                 }
             }
-        }
-
-        /// <inheritdoc />
-        public void CancelSearching()
-        {
-            if (_tokenSource != null)
-                _tokenSource.Cancel();
         }
 
         /// <summary>
@@ -473,13 +447,7 @@ namespace LogGrinder.Services
                     && attribute.Contains(searchLine, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        private bool SearchInAttribute(object attribute, string searchLine) => attribute != null ? SearchInAttribute(attribute.ToString(), searchLine) : false;
-
-        public void Dispose()
-        {
-            if (_tokenSource != null)
-                _tokenSource.Dispose();
-        }
+        private bool SearchInAttribute(object attribute, string searchLine) => attribute != null && SearchInAttribute(attribute.ToString(), searchLine);
 
         #region Константы
         private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработке файла.";

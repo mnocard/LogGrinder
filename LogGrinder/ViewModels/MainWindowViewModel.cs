@@ -347,9 +347,21 @@ namespace LogGrinder.ViewModels
                 CurrentSearchResult = null;
 
                 StatusChanging(StatusSearchingMatchWith + SearchOption.SearchLine);
-                var searchResult = await _searcher.SearchInOpenedFile(LogLinesBackup, SearchOption);
-                searchResult.FileName = CurrentLogFileItem;
-                searchResult.FilePath = _LogPaths.FirstOrDefault(f => f.Contains(CurrentLogFileItem));
+
+                var searchResult = new SearchResult();
+
+                try
+                {
+                    _TokenSource = new CancellationTokenSource();
+                    var token = _TokenSource.Token;
+
+                    searchResult = await _searcher.SearchInOpenedFile(LogLinesBackup, SearchOption, token);
+                    searchResult.FileName = CurrentLogFileItem;
+                    searchResult.FilePath = _LogPaths.FirstOrDefault(f => f.Contains(CurrentLogFileItem));
+
+                }
+                catch (OperationCanceledException) { }
+                finally { _TokenSource.Dispose(); }
 
                 if (!string.IsNullOrEmpty(SearchOption.SearchLine))
                     searchResult.SearchString = SearchOption.SearchLine.Length > 100
@@ -536,7 +548,7 @@ namespace LogGrinder.ViewModels
         {
             if (ButtonAdvancedSearch == StopIcon)
             {
-                _searcher.CancelSearching();
+                _TokenSource.Cancel();
                 StatusChanging(StatusSearchStopped);
                 ButtonAdvancedSearch = SearchIcon;
                 return;
@@ -608,6 +620,7 @@ namespace LogGrinder.ViewModels
             }
 
             if (UpdateButtonColor != ColorGreen
+                && _LogWatcher != null
                 && Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
                 && Path.GetFileNameWithoutExtension(_LogWatcher.Filter) == CurrentLogFileItem)
             {
@@ -743,7 +756,6 @@ namespace LogGrinder.ViewModels
                         });
                     }
                     catch (OperationCanceledException) { }
-                    catch (Exception e) { StatusChanging(e); }
                     finally { _TokenSource.Dispose(); }
 
                     if (newLines.Any())
@@ -793,7 +805,17 @@ namespace LogGrinder.ViewModels
                         var filePath = _LogPaths.FirstOrDefault(f => f.Contains(fileName));
                         if (filePath != null)
                         {
-                            var result = await _searcher.SearchInFile(filePath, SearchOption);
+                            var result = new SearchResult();
+                            try
+                            {
+                                _TokenSource = new CancellationTokenSource();
+                                var token = _TokenSource.Token;
+
+                                result = await _searcher.SearchInFile(filePath, SearchOption, token);
+                            }
+                            catch (OperationCanceledException) { }
+                            finally { _TokenSource.Dispose(); }
+
                             if (result.ClearResults.Count > 0)
                             {
                                 result.FilePath = filePath;

@@ -63,7 +63,7 @@ namespace LogGrinder.Services
                 byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
                 using MemoryStream openStream = new(bytes);
 
-                var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream);
+                var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream, cancellationToken: token);
 
                 if (model != null)
                 {
