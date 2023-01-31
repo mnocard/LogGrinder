@@ -1,12 +1,18 @@
 ﻿using System.Text;
 
+using AutoFixture.AutoMoq;
+
 using Moq;
 
 namespace LogGrinder.Tests.Services
 {
     public partial class FileHandlerTest
     {
+        private readonly Mock<IFileManager> _mockFileManager;
+        private readonly FileHandler _sut;
+
         private const string _path = "Path";
+
         private readonly MemoryStream _fakeMemoryStream;
         private readonly byte[] _fakeFileBytes;
         private const string _fakeFileContents =
@@ -18,13 +24,20 @@ namespace LogGrinder.Tests.Services
         {
             _fakeFileBytes = Encoding.UTF8.GetBytes(_fakeFileContents);
             _fakeMemoryStream = new MemoryStream(_fakeFileBytes);
+
+            var fixture = new Fixture().Customize(new AutoMoqCustomization());
+         
+            _mockFileManager = fixture.Freeze<Mock<IFileManager>>();
+            _mockFileManager
+                .Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
+                .Returns(() => new StreamReader(_fakeMemoryStream));
+
+            fixture.Register<IFileHandler>(() => new FileHandler(_mockFileManager.Object));
+            _sut = fixture.Create<FileHandler>();
         }
 
-        [Theory]
-        [AutoDomainData]
-        public async void ConvertFileToView_IncorrectContent_AggregateException(
-            [Frozen] Mock<IFileManager> mockFileManager,
-            FileHandler sut)
+        [Fact]
+        public async void ConvertFileToView_IncorrectContent_AggregateException()
         {
             // Arrange
             const string incorrectLogFile = "Incorrect log file content.";
@@ -32,7 +45,7 @@ namespace LogGrinder.Tests.Services
             var fakeFileBytes = Encoding.UTF8.GetBytes(incorrectLogFile);
             var fakeMemoryStream = new MemoryStream(fakeFileBytes);
 
-            mockFileManager.Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
+            _mockFileManager.Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
                             .Returns(() => new StreamReader(fakeMemoryStream));
 
             Exception exception = null;
@@ -40,7 +53,7 @@ namespace LogGrinder.Tests.Services
             // Act
             try
             {
-                await foreach (var _ in sut.ConvertFileToView(_path)) { }
+                await foreach (var _ in _sut.ConvertFileToView(_path)) { }
             }
             catch (Exception ex)
             {
@@ -53,19 +66,14 @@ namespace LogGrinder.Tests.Services
             Assert.Equal(exceptionText, exception.Message);
         }
 
-        [Theory]
-        [AutoDomainData]
-        public async void ConvertFileToView_EmptyPath_EmptyCollection(
-            [Frozen] Mock<IFileManager> mockFileManager,
-            FileHandler sut)
+        [Fact]
+        public async void ConvertFileToView_EmptyPath_EmptyCollection()
         {
             // Arrange
-            mockFileManager.Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
-                            .Returns(() => new StreamReader(_fakeMemoryStream));
+            var result = new List<LogModel>();
 
             // Act
-            var result = new List<LogModel>();
-            await foreach (var model in sut.ConvertFileToView(string.Empty))
+            await foreach (var model in _sut.ConvertFileToView(string.Empty))
                 result.Add(model);
 
             // Assert
@@ -74,15 +82,11 @@ namespace LogGrinder.Tests.Services
             Assert.Empty(result);
         }
 
-        [Theory]
-        [AutoDomainData]
-        public async void ConvertFileToView_CorrectConverting(
-            [Frozen] Mock<IFileManager> mockFileManager,
-            FileHandler sut)
+        [Fact]
+        public async void ConvertFileToView_CorrectConverting()
         {
             // Arrange
-            mockFileManager.Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
-                           .Returns(() => new StreamReader(_fakeMemoryStream));
+            var result = new List<LogModel>();
 
             var expectedLogModels = new List<LogModel>
             {
@@ -94,8 +98,7 @@ namespace LogGrinder.Tests.Services
             };
 
             // Act
-            var result = new List<LogModel>();
-            await foreach (var model in sut.ConvertFileToView(_path))
+            await foreach (var model in _sut.ConvertFileToView(_path))
                 result.Add(model);
 
             // Assert
@@ -111,6 +114,9 @@ namespace LogGrinder.Tests.Services
             FileHandler sut)
         {
             // Arrange
+            // По непонятной причине, если использовать мок FileManager, созданный в конструкторе и тестировать все тесты сразу, то ошибка не выбрасывается и тест проваливается.
+            // При этом при одиночном запуске - тест проходит корректно. А если использовать AutoDomainData, то тесты проходит хоть один, хоть с остальными.
+            // Очень ненадежный тест, возможно следует от него отказаться...
             mockFileManager.Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
                             .Returns(() => new StreamReader(_fakeMemoryStream));
 
@@ -138,19 +144,14 @@ namespace LogGrinder.Tests.Services
             Assert.IsType<OperationCanceledException>(exception);
         }
 
-        [Theory]
-        [AutoDomainData]
-        public async void ConvertFileToView_ContinuousConverting(
-            [Frozen] Mock<IFileManager> mockFileManager,
-            FileHandler sut)
+        [Fact]
+        public async void ConvertFileToView_ContinuousConverting()
         {
             // Arrange
             // 129 - начальная позиция 3ой строки в _fakeMemoryStream
-            mockFileManager.SetupProperty(p => p.FileSize, 129);
-            mockFileManager.SetupProperty(p => p.FileName, "Path");
-            mockFileManager.SetupProperty(p => p.LineNumber, 2);
-            mockFileManager.Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
-                            .Returns(() => new StreamReader(_fakeMemoryStream));
+            _mockFileManager.SetupProperty(p => p.FileSize, 129);
+            _mockFileManager.SetupProperty(p => p.FileName, "Path");
+            _mockFileManager.SetupProperty(p => p.LineNumber, 2);
 
             var expectedLogModels = new List<LogModel>
             {
@@ -161,7 +162,7 @@ namespace LogGrinder.Tests.Services
 
             // Act
             var result = new List<LogModel>();
-            await foreach (var model in sut.ConvertFileToView(_path))
+            await foreach (var model in _sut.ConvertFileToView(_path))
                 result.Add(model);
 
             // Assert
@@ -170,7 +171,7 @@ namespace LogGrinder.Tests.Services
             Assert.True(LogModelsEquals(expectedLogModels, result));
         }
 
-        private bool LogModelsEquals(LogModel first, LogModel second)
+        public static bool LogModelsEquals(LogModel first, LogModel second)
         {
             if ((first is null && second is not null) ||
                 (first is not null && second is null))
@@ -201,7 +202,7 @@ namespace LogGrinder.Tests.Services
                 && first.FileName == second.FileName;
         }
 
-        private bool LogModelsEquals(List<LogModel> first, List<LogModel> second)
+        public static bool LogModelsEquals(List<LogModel> first, List<LogModel> second)
         {
             if ((first is null && second is not null) ||
                 (first is not null && second is null) ||
