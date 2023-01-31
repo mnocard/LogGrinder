@@ -73,9 +73,9 @@ namespace LogGrinder.Services
         /// <returns>Полученная строка</returns>
         private string ProcessAttribute(string attributePrefix, string? attribute, bool useBeautifier)
         {
-            if (!string.IsNullOrEmpty(attribute))
-                return attributePrefix + (useBeautifier ? (JsonBeautifier(attribute) + Environment.NewLine) : attribute) + Environment.NewLine;
-            else return string.Empty;
+            return string.IsNullOrEmpty(attribute)
+                ? string.Empty
+                : attributePrefix + (useBeautifier ? (JsonBeautifier(attribute) + Environment.NewLine) : attribute) + Environment.NewLine;
         }
 
         /// <summary>

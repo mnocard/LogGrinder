@@ -88,15 +88,14 @@ namespace LogGrinder.Services
                 using MemoryStream openStream = new(bytes);
 
                 var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream, cancellationToken: token);
+                if (model == null)
+                    continue;
 
-                if (model != null)
-                {
-                    counter++;
-                    model.Id = counter;
-                    SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
+                counter++;
+                model.Id = counter;
+                SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
 
-                    _fileHandler.AddCustomAttributes(ref model, jsonString, filePath);
-                }
+                _fileHandler.AddCustomAttributes(ref model, jsonString, filePath);
             }
 
             // если ПОСТочередь не заполнилась, то всё равно надо слить остатки в результаты

@@ -179,26 +179,26 @@ namespace LogGrinder.Tests.Services
             if (first is null && second is null)
                 return true;
 
-            return first.Id == second.Id &&
-                first.t == second.t &&
-                first.l == second.l &&
-                first.pid == second.pid &&
-                first.tab == second.tab &&
-                first.mt == second.mt &&
-                first.tr == second.tr &&
-                first.bn == second.bn &&
-                first.bv == second.bv &&
-                first.lg == second.lg &&
-                first.v == second.v &&
-                first.un == second.un &&
-                first.tn == second.tn &&
-                first.args?.ToString() == second.args?.ToString() &&
-                first.cust?.ToString() == second.cust?.ToString() &&
-                first.ex?.ToString() == second.ex?.ToString() &&
-                first.span?.ToString() == second.span?.ToString() &&
-                first.Other == second.Other &&
-                first.RawLine == second.RawLine &&
-                first.FileName == second.FileName;
+            return first.Id == second.Id
+                && first.t == second.t
+                && first.l == second.l
+                && first.pid == second.pid
+                && first.tab == second.tab
+                && first.mt == second.mt
+                && first.tr == second.tr
+                && first.bn == second.bn
+                && first.bv == second.bv
+                && first.lg == second.lg
+                && first.v == second.v
+                && first.un == second.un
+                && first.tn == second.tn
+                && first.args?.ToString() == second.args?.ToString()
+                && first.cust?.ToString() == second.cust?.ToString()
+                && first.ex?.ToString() == second.ex?.ToString()
+                && first.span?.ToString() == second.span?.ToString()
+                && first.Other == second.Other
+                && first.RawLine == second.RawLine
+                && first.FileName == second.FileName;
         }
 
         private bool LogModelsEquals(List<LogModel> first, List<LogModel> second)

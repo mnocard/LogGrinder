@@ -192,7 +192,6 @@ namespace LogGrinder.ViewModels
 
         #endregion
 
-
         #region SearchModel : SearchModel - Настройка расширенного поиска
 
         /// <summary>Настройка расширенного поиска</summary>
@@ -268,53 +267,52 @@ namespace LogGrinder.ViewModels
         /// <returns></returns>
         public async Task OpenFile()
         {
+            if (ButtonOpenFolderIcon == StopIcon)
+            {
+                _TokenSource.Cancel();
+                StatusChanging(StatusProcessingFileStopped);
+                return;
+            }
+
+            var dialog = new OpenFileDialog
+            {
+                AllowMultiple = true,
+                Title = ChooseLogFiles,
+                Filters = new List<FileDialogFilter>
+                {
+                    new FileDialogFilter
+                    {
+                        Extensions = new List<string> { LogExt },
+                        Name = DlgJsonFilter,
+                    },
+                    new FileDialogFilter
+                    {
+                        Extensions = new List<string> { AllExt },
+                        Name = DlgExtFilter,
+                    }
+                }
+            };
+
+            var paths = await dialog.ShowAsync(new Window());
+            if (paths is null || !paths.Any())
+                return;
+
             try
             {
-                if (ButtonOpenFolderIcon == StopIcon)
+                foreach (var path in paths)
                 {
-                    _TokenSource.Cancel();
-                    StatusChanging(StatusProcessingFileStopped);
-                    return;
+                    if (!_LogPaths.Contains(path))
+                    {
+                        _LogPaths.Add(path);
+                        var fileName = Path.GetFileNameWithoutExtension(path);
+                        LogFileNames.Add(fileName);
+                    }
                 }
 
-                var dialog = new OpenFileDialog
+                if (paths.Length == 1)
                 {
-                    AllowMultiple = true,
-                    Title = ChooseLogFiles,
-                    Filters = new List<FileDialogFilter>
-                    {
-                        new FileDialogFilter
-                        {
-                            Extensions = new List<string> { LogExt },
-                            Name = DlgJsonFilter,
-                        },
-                        new FileDialogFilter
-                        {
-                            Extensions = new List<string> { AllExt },
-                            Name = DlgExtFilter,
-                        }
-                    }
-                };
-
-                var paths = await dialog.ShowAsync(new Window());
-                if (paths is not null &&
-                    paths.Any())
-                {
-                    foreach (var path in paths)
-                    {
-                        if (!_LogPaths.Contains(path))
-                        {
-                            _LogPaths.Add(path);
-                            var fileName = Path.GetFileNameWithoutExtension(path);
-                            LogFileNames.Add(fileName);
-                        }
-                    }
-
-                    if (paths.Length == 1)
-                    {
-                        CurrentLogFileItem = Path.GetFileNameWithoutExtension(paths[0]);
-                        _IsFileOnView = true;
-                    }
+                    CurrentLogFileItem = Path.GetFileNameWithoutExtension(paths[0]);
+                    _IsFileOnView = true;
                 }
             }
             catch (Exception e) { StatusChanging(e); }
@@ -370,24 +368,25 @@ namespace LogGrinder.ViewModels
                 else
                     searchResult.SearchString = AdvancedSearch;
 
-                if (searchResult.ClearResults.Count > 0)
+                if (searchResult.ClearResults.Count <= 0)
                 {
-                    SearchResults.Add(searchResult);
-
-                    _IsNeedToShowSearchResults = false;
-                    CurrentSearchResult = searchResult;
-                    _IsNeedToShowSearchResults = true;
-
-                    _CurrentSearchIndex = LogLines.IndexOf(searchResult.ClearResults.FirstOrDefault());
-                    SelectedLogLine = LogLines[_CurrentSearchIndex];
-
-                    if (parameter is DataGrid datagrid && LogLines.Contains(SelectedLogLine))
-                        datagrid.ScrollIntoView(SelectedLogLine, null);
-
-                    StatusChanging(string.Format(StatusFoundResultsCount, searchResult.ClearResults.Count));
-                }
-                else
                     StatusChanging(StatusNotFound);
+                    return;
+                }
+
+                SearchResults.Add(searchResult);
+
+                _IsNeedToShowSearchResults = false;
+                CurrentSearchResult = searchResult;
+                _IsNeedToShowSearchResults = true;
+
+                _CurrentSearchIndex = LogLines.IndexOf(searchResult.ClearResults.FirstOrDefault());
+                SelectedLogLine = LogLines[_CurrentSearchIndex];
+
+                if (parameter is DataGrid datagrid && LogLines.Contains(SelectedLogLine))
+                    datagrid.ScrollIntoView(SelectedLogLine, null);
+
+                StatusChanging(string.Format(StatusFoundResultsCount, searchResult.ClearResults.Count));
             }
             catch (Exception e) { StatusChanging(e); }
 
@@ -405,22 +404,23 @@ namespace LogGrinder.ViewModels
         /// <returns></returns>
         public async Task ShowSearchResult(object parameter)
         {
-            if (parameter is DataGrid datagrid && CurrentSearchResult is not null)
+            if (parameter is not DataGrid datagrid || CurrentSearchResult is null)
             {
-                var logLine = SelectedLogLine;
-
-                LogLines = new(CurrentSearchResult.ClearResults);
-                _IsFileOnView = false;
-
-                if (logLine != null)
-                {
-                    SelectedLogLine = logLine;
-                    if (LogLines.Contains(SelectedLogLine))
-                        datagrid.ScrollIntoView(SelectedLogLine, null);
-                }
-            }
-            else
                 StatusChanging(StatusChooseSearchResultFromList);
+                return;
+            }
+
+            var logLine = SelectedLogLine;
+
+            LogLines = new(CurrentSearchResult.ClearResults);
+            _IsFileOnView = false;
+
+            if (logLine == null)
+                return;
+
+            SelectedLogLine = logLine;
+            if (LogLines.Contains(SelectedLogLine))
+                datagrid.ScrollIntoView(SelectedLogLine, null);
         }
 
         #endregion
@@ -428,24 +428,28 @@ namespace LogGrinder.ViewModels
         #region ShowNearestRows : показать ближайшие строки
         public async Task ShowNearestRows(object parameter)
         {
+            if (parameter is not DataGrid datagrid || CurrentSearchResult is null)
+            {
+                StatusChanging(StatusChooseSearchResultFromList);
+                return;
+            }
+
+            if (CurrentSearchResult.ResultsWithNearestLines.Count <= 0)
+                return;
+
             try
             {
-                if (CurrentSearchResult == null)
-                    StatusChanging(StatusChooseSearchResultFromList);
-                else if (CurrentSearchResult.ResultsWithNearestLines.Count > 0 &&
-                    parameter is DataGrid datagrid)
-                {
-                    var logLine = SelectedLogLine;
+                var logLine = SelectedLogLine;
 
-                    CreateLogLines(CurrentSearchResult.ResultsWithNearestLines);
+                CreateLogLines(CurrentSearchResult.ResultsWithNearestLines);
+                _IsFileOnView = false;
 
-                    if (logLine != null)
-                    {
-                        SelectedLogLine = logLine;
-                        if (LogLines.Contains(SelectedLogLine))
-                            datagrid.ScrollIntoView(SelectedLogLine, null);
-                    }
-                }
+                if (logLine == null)
+                    return;
+
+                SelectedLogLine = logLine;
+                if (LogLines.Contains(SelectedLogLine))
+                    datagrid.ScrollIntoView(SelectedLogLine, null);
             }
             catch (Exception e) { StatusChanging(e); }
         }
@@ -465,31 +469,31 @@ namespace LogGrinder.ViewModels
                 return;
             }
 
+            if (CurrentSearchResult.ClearResults.Count == 1)
+            {
+                SelectedLogLine = CurrentSearchResult.ClearResults[0];
+                return;
+            }
+
+            if (parameter is not DataGrid datagrid)
+                return;
+
             try
             {
-                if (parameter is DataGrid datagrid)
+                if (CurrentSearchResult.ClearResults.Contains(SelectedLogLine))
                 {
-                    if (CurrentSearchResult.ClearResults.Count == 1)
-                    {
-                        SelectedLogLine = CurrentSearchResult.ClearResults[0];
-                        return;
-                    }
-
-                    if (CurrentSearchResult.ClearResults.Contains(SelectedLogLine))
-                    {
-                        _CurrentSearchIndex = CurrentSearchResult.ClearResults.IndexOf(SelectedLogLine) - 1;
-                        SelectedLogLine = _CurrentSearchIndex < 0
-                            ? CurrentSearchResult.ClearResults[^1]
-                            : CurrentSearchResult.ClearResults[_CurrentSearchIndex];
-                    }
-                    else
-                        SelectedLogLine = _CurrentSearchIndex > CurrentSearchResult.ClearResults.Count && _CurrentSearchIndex < 0
-                            ? CurrentSearchResult.ClearResults[_CurrentSearchIndex]
-                            : CurrentSearchResult.ClearResults.FirstOrDefault()!;
-
-                    if (LogLines.Contains(SelectedLogLine))
-                        datagrid.ScrollIntoView(SelectedLogLine, null);
+                    _CurrentSearchIndex = CurrentSearchResult.ClearResults.IndexOf(SelectedLogLine) - 1;
+                    SelectedLogLine = _CurrentSearchIndex < 0
+                        ? CurrentSearchResult.ClearResults[^1]
+                        : CurrentSearchResult.ClearResults[_CurrentSearchIndex];
                 }
+                else
+                    SelectedLogLine = _CurrentSearchIndex > CurrentSearchResult.ClearResults.Count && _CurrentSearchIndex < 0
+                        ? CurrentSearchResult.ClearResults[_CurrentSearchIndex]
+                        : CurrentSearchResult.ClearResults.FirstOrDefault()!;
+
+                if (LogLines.Contains(SelectedLogLine))
+                    datagrid.ScrollIntoView(SelectedLogLine, null);
             }
             catch (Exception e) { StatusChanging(e); }
         }
@@ -508,31 +512,31 @@ namespace LogGrinder.ViewModels
                 return;
             }
 
+            if (CurrentSearchResult.ClearResults.Count == 1)
+            {
+                SelectedLogLine = CurrentSearchResult.ClearResults[0];
+                return;
+            }
+
+            if (parameter is not DataGrid datagrid)
+                return;
+
             try
             {
-                if (parameter is DataGrid datagrid)
+                if (CurrentSearchResult.ClearResults.Contains(SelectedLogLine))
                 {
-                    if (CurrentSearchResult.ClearResults.Count == 1)
-                    {
-                        SelectedLogLine = CurrentSearchResult.ClearResults[0];
-                        return;
-                    }
-
-                    if (CurrentSearchResult.ClearResults.Contains(SelectedLogLine))
-                    {
-                        _CurrentSearchIndex = CurrentSearchResult.ClearResults.IndexOf(SelectedLogLine) + 1;
-                        SelectedLogLine = _CurrentSearchIndex > CurrentSearchResult.ClearResults.Count - 1
-                            ? CurrentSearchResult.ClearResults[0]
-                            : CurrentSearchResult.ClearResults[_CurrentSearchIndex];
-                    }
-                    else
-                        SelectedLogLine = _CurrentSearchIndex > CurrentSearchResult.ClearResults.Count && _CurrentSearchIndex < 0
-                            ? CurrentSearchResult.ClearResults[_CurrentSearchIndex]
-                            : CurrentSearchResult.ClearResults.FirstOrDefault()!;
-
-                    if (LogLines.Contains(SelectedLogLine))
-                        datagrid.ScrollIntoView(SelectedLogLine, null);
+                    _CurrentSearchIndex = CurrentSearchResult.ClearResults.IndexOf(SelectedLogLine) + 1;
+                    SelectedLogLine = _CurrentSearchIndex > CurrentSearchResult.ClearResults.Count - 1
+                        ? CurrentSearchResult.ClearResults[0]
+                        : CurrentSearchResult.ClearResults[_CurrentSearchIndex];
                 }
+                else
+                    SelectedLogLine = _CurrentSearchIndex > CurrentSearchResult.ClearResults.Count && _CurrentSearchIndex < 0
+                        ? CurrentSearchResult.ClearResults[_CurrentSearchIndex]
+                        : CurrentSearchResult.ClearResults.FirstOrDefault()!;
+
+                if (LogLines.Contains(SelectedLogLine))
+                    datagrid.ScrollIntoView(SelectedLogLine, null);
             }
             catch (Exception e) { StatusChanging(e); }
         }
@@ -675,24 +679,22 @@ namespace LogGrinder.ViewModels
                 return;
             }
 
-            if (parameter is DataGrid datagrid
-                && SelectedLogLine != null
-                && !string.IsNullOrEmpty(SelectedLogLine.FileName)
-                && CurrentSearchResult.ClearResults.Contains(SelectedLogLine))
-            {
-                var logLine = SelectedLogLine;
-
-                if (SelectedLogLine.FileName == CurrentLogFileItem)
-                    await ShowLogLinesBackup();
-                else
-                    CurrentLogFileItem = SelectedLogLine.FileName;
-
-                SelectedLogLine = logLine;
-                if (LogLines.Contains(SelectedLogLine))
-                    datagrid.ScrollIntoView(SelectedLogLine, datagrid.Columns[0]);
-
+            if (parameter is not DataGrid datagrid
+                || SelectedLogLine == null
+                || string.IsNullOrEmpty(SelectedLogLine.FileName)
+                || !CurrentSearchResult.ClearResults.Contains(SelectedLogLine))
                 return;
-            }
+
+            var logLine = SelectedLogLine;
+
+            if (SelectedLogLine.FileName == CurrentLogFileItem)
+                await ShowLogLinesBackup();
+            else
+                CurrentLogFileItem = SelectedLogLine.FileName;
+
+            SelectedLogLine = logLine;
+            if (LogLines.Contains(SelectedLogLine))
+                datagrid.ScrollIntoView(SelectedLogLine, datagrid.Columns[0]);
         }
 
         #endregion
@@ -709,76 +711,74 @@ namespace LogGrinder.ViewModels
         /// <returns></returns>
         private async Task ProcessLogFile(string filePath, bool isUpdate = false)
         {
-            if (!string.IsNullOrEmpty(filePath))
+            if (string.IsNullOrEmpty(filePath))
+                return;
+
+            ButtonOpenFolderIcon = StopIcon;
+
+            try
             {
-                ButtonOpenFolderIcon = StopIcon;
-
-                try
+                var currentLogFile = _LogPaths.FirstOrDefault(f => f.Contains(filePath));
+                if (new FileInfo(currentLogFile).Length > bigFileSize
+                    && Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 {
-                    var currentLogFile = _LogPaths.FirstOrDefault(f => f.Contains(filePath));
-                    if (new FileInfo(currentLogFile).Length > bigFileSize)
+                    var dataContext = new InfoWindowViewModel(
+                        InfoTitleAttention,
+                        InfoMessageBigFileSize,
+                        InfoButtonNameYes,
+                        InfoButtonNameNo,
+                        true);
+
+                    var window = new InfoWindow
                     {
-                        if (Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                        {
-                            var dataContext = new InfoWindowViewModel(
-                                InfoTitleAttention,
-                                InfoMessageBigFileSize,
-                                InfoButtonNameYes,
-                                InfoButtonNameNo,
-                                true);
+                        DataContext = dataContext,
+                        Width = 400,
+                        Height = 250,
+                    };
 
-                            var window = new InfoWindow
-                            {
-                                DataContext = dataContext,
-                                Width = 400,
-                                Height = 250,
-                            };
+                    var result = await window.ShowDialog<int>(desktop.MainWindow);
 
-                            var result = await window.ShowDialog<int>(desktop.MainWindow);
-
-                            if (result == 2)
-                            {
-                                ButtonOpenFolderIcon = FolderIcon;
-                                return;
-                            }
-                        }
-                    }
-
-                    var newLines = new List<LogModel>();
-                    try
+                    if (result == 2)
                     {
-                        _TokenSource = new CancellationTokenSource();
-                        var token = _TokenSource.Token;
-                        await Task.Run(async () =>
-                        {
-                            await foreach (var line in _fileHandler.ConvertFileToView(currentLogFile, token))
-                                newLines.Add(line);
-                        });
-                    }
-                    catch (OperationCanceledException) { }
-                    finally { _TokenSource.Dispose(); }
-
-                    if (newLines.Any())
-                    {
-                        if (isUpdate)
-                        {
-                            LogLinesBackup.AddRange(newLines);
-                            UpdateLogLinesUI(newLines);
-                        }
-                        else
-                        {
-                            LogLinesBackup = new(newLines);
-                            CreateLogLinesUI(LogLinesBackup);
-                        }
-
-                        SelectedLogLine = newLines[0];
-                        StartLogWatcher(currentLogFile);
+                        ButtonOpenFolderIcon = FolderIcon;
+                        return;
                     }
                 }
-                catch (Exception e) { StatusChanging(e); }
 
-                ButtonOpenFolderIcon = FolderIcon;
+                var newLines = new List<LogModel>();
+                try
+                {
+                    _TokenSource = new CancellationTokenSource();
+                    var token = _TokenSource.Token;
+                    await Task.Run(async () =>
+                    {
+                        await foreach (var line in _fileHandler.ConvertFileToView(currentLogFile, token))
+                            newLines.Add(line);
+                    });
+                }
+                catch (OperationCanceledException) { }
+                finally { _TokenSource.Dispose(); }
+
+                if (newLines.Any())
+                {
+                    if (isUpdate)
+                    {
+                        LogLinesBackup.AddRange(newLines);
+                        UpdateLogLinesUI(newLines);
+                    }
+                    else
+                    {
+                        LogLinesBackup = new(newLines);
+                        CreateLogLinesUI(LogLinesBackup);
+                    }
+
+                    SelectedLogLine = newLines[0];
+                    StartLogWatcher(currentLogFile);
+                }
             }
+            catch (Exception e) { StatusChanging(e); }
+
+            ButtonOpenFolderIcon = FolderIcon;
         }
 
         #endregion
@@ -803,29 +803,29 @@ namespace LogGrinder.ViewModels
                     await Task.Run(async () =>
                     {
                         var filePath = _LogPaths.FirstOrDefault(f => f.Contains(fileName));
-                        if (filePath != null)
+                        if (filePath == null)
+                            return;
+
+                        var result = new SearchResult();
+                        try
                         {
-                            var result = new SearchResult();
-                            try
-                            {
-                                _TokenSource = new CancellationTokenSource();
-                                var token = _TokenSource.Token;
+                            _TokenSource = new CancellationTokenSource();
+                            var token = _TokenSource.Token;
 
-                                result = await _searcher.SearchInFile(filePath, SearchOption, token);
-                            }
-                            catch (OperationCanceledException) { }
-                            finally { _TokenSource.Dispose(); }
+                            result = await _searcher.SearchInFile(filePath, SearchOption, token);
+                        }
+                        catch (OperationCanceledException) { }
+                        finally { _TokenSource.Dispose(); }
 
-                            if (result.ClearResults.Count > 0)
-                            {
-                                result.FilePath = filePath;
-                                result.FileName = fileName;
-                                result.SearchString = SearchOption.SearchLine;
+                        if (result.ClearResults.Count > 0)
+                        {
+                            result.FilePath = filePath;
+                            result.FileName = fileName;
+                            result.SearchString = SearchOption.SearchLine;
 
-                                results.Add(result);
-                                results[0].ClearResults.AddRange(result.ClearResults);
-                                results[0].ResultsWithNearestLines.AddRange(result.ResultsWithNearestLines);
-                            }
+                            results.Add(result);
+                            results[0].ClearResults.AddRange(result.ClearResults);
+                            results[0].ResultsWithNearestLines.AddRange(result.ResultsWithNearestLines);
                         }
                     });
                 }
@@ -840,21 +840,21 @@ namespace LogGrinder.ViewModels
                     results[0].FileName = AllResults;
                 }
 
-                if (results.Count > 0)
+                if (results.Count <= 0)
                 {
-                    foreach (var result in results)
-                        SearchResults.Add(result);
-
-                    CurrentSearchResult = results[0];
-
-                    StatusChanging(string.Format(
-                        StatusFoundResultsInFilesCount,
-                        results.FirstOrDefault()?.ClearResults.Count,
-                        results.Count > 1 ? results.Count - 1 : results.Count));
-                }
-                else
                     StatusChanging(StatusNotFound);
+                    return;
+                }
 
+                foreach (var result in results)
+                    SearchResults.Add(result);
+
+                CurrentSearchResult = results[0];
+
+                StatusChanging(string.Format(
+                    StatusFoundResultsInFilesCount,
+                    results.FirstOrDefault()?.ClearResults.Count,
+                    results.Count > 1 ? results.Count - 1 : results.Count));
             }
             catch (Exception e) { StatusChanging(e); }
 
@@ -924,11 +924,11 @@ namespace LogGrinder.ViewModels
         /// </summary>
         private void DisposeLogWatcher()
         {
-            if (_LogWatcher != null)
-            {
-                _LogWatcher.Dispose();
-                _LogWatcher = null;
-            }
+            if (_LogWatcher == null)
+                return;
+
+            _LogWatcher.Dispose();
+            _LogWatcher = null;
         }
         #endregion
 
@@ -939,20 +939,20 @@ namespace LogGrinder.ViewModels
         /// <param name="filPath">Полный путь к лог-файлу, изменения которого нужно отслеживать</param>
         private void StartLogWatcher(string filPath)
         {
-            if (!string.IsNullOrEmpty(filPath))
+            if (string.IsNullOrEmpty(filPath))
+                return;
+            
+            DisposeLogWatcher();
+
+            _LogWatcher = new FileSystemWatcher(Path.GetDirectoryName(filPath))
             {
-                DisposeLogWatcher();
+                NotifyFilter = NotifyFilters.Size,
+                Filter = Path.GetFileName(filPath),
+                IncludeSubdirectories = false,
+                EnableRaisingEvents = true
+            };
 
-                _LogWatcher = new FileSystemWatcher(Path.GetDirectoryName(filPath))
-                {
-                    NotifyFilter = NotifyFilters.Size,
-                    Filter = Path.GetFileName(filPath),
-                    IncludeSubdirectories = false,
-                    EnableRaisingEvents = true
-                };
-
-                _LogWatcher.Changed += new FileSystemEventHandler(OnFileChanged);
-            }
+            _LogWatcher.Changed += new FileSystemEventHandler(OnFileChanged);
         }
         #endregion
 

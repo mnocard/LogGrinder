@@ -65,20 +65,20 @@ namespace LogGrinder.Services
 
                 var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream, cancellationToken: token);
 
-                if (model != null)
-                {
-                    counter++;
-                    model.Id = counter;
+                if (model == null)
+                    continue;
 
-                    AddCustomAttributes(ref model, jsonString, filePath);
+                counter++;
+                model.Id = counter;
 
-                    rawLogLines.Add(model);
+                AddCustomAttributes(ref model, jsonString, filePath);
 
-                    _fileManager.LineNumber = counter;
-                    _fileManager.FileSize = file.BaseStream.Length;
-                    _fileManager.FileName = filePath;
-                    yield return model;
-                }
+                rawLogLines.Add(model);
+
+                _fileManager.LineNumber = counter;
+                _fileManager.FileSize = file.BaseStream.Length;
+                _fileManager.FileName = filePath;
+                yield return model;
             }
         }
 

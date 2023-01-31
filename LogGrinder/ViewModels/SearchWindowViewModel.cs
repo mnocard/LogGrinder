@@ -158,10 +158,6 @@ namespace LogGrinder.ViewModels
         }
         #endregion
 
-        #region Методы
-
-        #endregion
-
         #region Константы
 
         private const string TitleSearchWindow = "Расширенные поиск";

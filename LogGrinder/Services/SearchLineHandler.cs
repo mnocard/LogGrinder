@@ -39,50 +39,50 @@ namespace LogGrinder.Services
             line = line.Trim();
 
             // Добавляем атрибуты в список атрибутов, попутно отрезая от начальной строки найденные атрибуты
-            if (line.StartsWith(_dollar))
-            {
-                line = line.Substring(_dollar.Length);
-                var separatedLine = line.Split(_equals);
-                var attributesList = separatedLine[0].Split(_dollar);
-                var condition = !separatedLine[1].StartsWith(_minus);
-                var searchLine = separatedLine[1];
+            if (!line.StartsWith(_dollar))
+                return option;
 
-                // Если в начале стоит минус, то убираем его и первую кавычку.
-                searchLine = condition ? searchLine.Substring(1) : searchLine.Substring(2);
-                // Потом убираем последнюю кавычку
-                searchLine = searchLine.Remove(searchLine.Length - 1);
+            line = line.Substring(_dollar.Length);
+            var separatedLine = line.Split(_equals);
+            var attributesList = separatedLine[0].Split(_dollar);
+            var condition = !separatedLine[1].StartsWith(_minus);
+            var searchLine = separatedLine[1];
 
-                foreach (var item in attributesList)
-                    switch (item)
-                    {
-                        case _dateBegin:
-                            option.DateBegin = searchLine;
-                            break;
-                        case _dateEnd:
-                            option.DateEnd = searchLine;
-                            break;
-                        case _linesNumberStart:
-                            option.LineNumberStart = int.Parse(searchLine);
-                            break;
-                        case _linesNumberEnd:
-                            option.LineNumberEnd = int.Parse(searchLine);
-                            break;
-                        case _linesCountBefore:
-                            option.LinesCountBefore = int.Parse(searchLine);
-                            break;
-                        case _linesCountAfter:
-                            option.LinesCountAfter = int.Parse(searchLine);
-                            break;
-                        default:
-                            option.Attributes.Add(new SearchModel.Attribute
-                            {
-                                Name = item,
-                                Condition = condition,
-                                SearchLinePattern = ConvertSearchLineToPattern(searchLine),
-                            });
-                            break;
-                    }
-            }
+            // Если в начале стоит минус, то убираем его и первую кавычку.
+            searchLine = condition ? searchLine.Substring(1) : searchLine.Substring(2);
+            // Потом убираем последнюю кавычку
+            searchLine = searchLine.Remove(searchLine.Length - 1);
+
+            foreach (var item in attributesList)
+                switch (item)
+                {
+                    case _dateBegin:
+                        option.DateBegin = searchLine;
+                        break;
+                    case _dateEnd:
+                        option.DateEnd = searchLine;
+                        break;
+                    case _linesNumberStart:
+                        option.LineNumberStart = int.Parse(searchLine);
+                        break;
+                    case _linesNumberEnd:
+                        option.LineNumberEnd = int.Parse(searchLine);
+                        break;
+                    case _linesCountBefore:
+                        option.LinesCountBefore = int.Parse(searchLine);
+                        break;
+                    case _linesCountAfter:
+                        option.LinesCountAfter = int.Parse(searchLine);
+                        break;
+                    default:
+                        option.Attributes.Add(new SearchModel.Attribute
+                        {
+                            Name = item,
+                            Condition = condition,
+                            SearchLinePattern = ConvertSearchLineToPattern(searchLine),
+                        });
+                        break;
+                }
 
             return option;
         }
@@ -109,13 +109,30 @@ namespace LogGrinder.Services
                     if (lines[i].Contains(_replacementMarks))
                         lines[i] = lines[i].Replace(_replacementMarks, _asterisk);
 
+            return ProcessSymbols(lines);
+        }
+
+        /// <summary>
+        /// Обработка символов искомой строки для поиска по атрибутам
+        /// </summary>
+        /// <param name="lines"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private string ProcessSymbols(string[] lines)
+        {
             var pattern = string.Empty;
 
-            for (int i = 0; i < lines.Length; i++)
+            bool isFirstLetter;
+            bool isLastLetter;
+
+            for (var i = 0; i < lines.Length; i++)
             {
+                isFirstLetter = i == 0;
+                isLastLetter = i == lines.Length - 1;
+
                 if (!string.IsNullOrEmpty(lines[i]))
                 {
-                    if (i == 0)
+                    if (isFirstLetter)
                         pattern += _startWith;
 
                     foreach (var letter in lines[i])
@@ -125,7 +142,7 @@ namespace LogGrinder.Services
                         pattern += _closedBracket;
                     }
 
-                    if (i == lines.Length - 1)
+                    if (isLastLetter)
                         pattern += _endWith;
                     else
                         pattern += _anyChars;
