@@ -53,7 +53,7 @@ namespace LogGrinder.Services
                     result.ResultsWithNearestLines.AddRange(linesAfter);
 
                 result.ResultsWithNearestLines = result.ResultsWithNearestLines.Distinct().ToList();
-            }, token);
+            });
 
             return result;
         }
@@ -68,7 +68,7 @@ namespace LogGrinder.Services
             var counter = 0;
             string? jsonString;
 
-            if (string.IsNullOrEmpty(filePath) || string.IsNullOrEmpty(option.SearchLine))
+            if (string.IsNullOrEmpty(filePath))
                 return result;
 
             var fileReadingOptionns = new FileStreamOptions
@@ -449,7 +449,7 @@ namespace LogGrinder.Services
         private bool SearchInAttribute(object attribute, string searchLine) => attribute != null && SearchInAttribute(attribute.ToString(), searchLine);
 
         #region Константы
-        private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработке файла.";
+        private const string LogUnhandledError = "Непредвиденная ошибка при попытке обработать файл.";
         private const char _dollar = '$';
         private const string _anyChars = ".+";
 
