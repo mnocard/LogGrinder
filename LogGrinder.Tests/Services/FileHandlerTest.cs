@@ -26,13 +26,12 @@ namespace LogGrinder.Tests.Services
             _fakeMemoryStream = new MemoryStream(_fakeFileBytes);
 
             var fixture = new Fixture().Customize(new AutoMoqCustomization());
-         
+
             _mockFileManager = fixture.Freeze<Mock<IFileManager>>();
             _mockFileManager
                 .Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
                 .Returns(() => new StreamReader(_fakeMemoryStream));
 
-            fixture.Register<IFileHandler>(() => new FileHandler(_mockFileManager.Object));
             _sut = fixture.Create<FileHandler>();
         }
 
@@ -120,15 +119,15 @@ namespace LogGrinder.Tests.Services
             mockFileManager.Setup(fileManager => fileManager.StreamReader(It.IsAny<string>(), It.IsAny<FileStreamOptions>()))
                             .Returns(() => new StreamReader(_fakeMemoryStream));
 
-            CancellationTokenSource _tokenSource = new ();
-            CancellationToken _token = _tokenSource.Token;
-            _tokenSource.CancelAfter(0);
+            CancellationTokenSource tokenSource = new();
+            CancellationToken token = tokenSource.Token;
+            tokenSource.CancelAfter(0);
             Exception exception = null;
 
             // Act
             try
             {
-                await foreach (var _ in sut.ConvertFileToView(_path, _token)) { }
+                await foreach (var _ in sut.ConvertFileToView(_path, token)) { }
             }
             catch (Exception ex)
             {
@@ -136,7 +135,7 @@ namespace LogGrinder.Tests.Services
             }
             finally
             {
-                _tokenSource.Dispose();
+                tokenSource.Dispose();
             }
 
             // Assert
@@ -180,26 +179,29 @@ namespace LogGrinder.Tests.Services
             if (first is null && second is null)
                 return true;
 
-            return first.Id == second.Id
-                && first.t == second.t
-                && first.l == second.l
-                && first.pid == second.pid
-                && first.tab == second.tab
-                && first.mt == second.mt
-                && first.tr == second.tr
-                && first.bn == second.bn
-                && first.bv == second.bv
-                && first.lg == second.lg
-                && first.v == second.v
-                && first.un == second.un
-                && first.tn == second.tn
-                && first.args?.ToString() == second.args?.ToString()
-                && first.cust?.ToString() == second.cust?.ToString()
-                && first.ex?.ToString() == second.ex?.ToString()
-                && first.span?.ToString() == second.span?.ToString()
-                && first.Other == second.Other
-                && first.RawLine == second.RawLine
-                && first.FileName == second.FileName;
+            if (first.Id == second.Id)
+                if (first.t == second.t)
+                    if (first.l == second.l)
+                        if (first.pid == second.pid)
+                            if (first.tab == second.tab)
+                                if (first.mt == second.mt)
+                                    if (first.tr == second.tr)
+                                        if (first.bn == second.bn)
+                                            if (first.bv == second.bv)
+                                                if (first.lg == second.lg)
+                                                    if (first.v == second.v)
+                                                        if (first.un == second.un)
+                                                            if (first.tn == second.tn)
+                                                                if (first.args?.ToString() == second.args?.ToString())
+                                                                    if (first.cust?.ToString() == second.cust?.ToString())
+                                                                        if (first.ex?.ToString() == second.ex?.ToString())
+                                                                            if (first.span?.ToString() == second.span?.ToString())
+                                                                                if (first.Other == second.Other)
+                                                                                    if (first.RawLine == second.RawLine)
+                                                                                        if (first.FileName == second.FileName)
+                                                                                            return true;
+
+            return false;
         }
 
         public static bool LogModelsEquals(List<LogModel> first, List<LogModel> second)
