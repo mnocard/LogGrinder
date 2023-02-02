@@ -50,7 +50,7 @@ jobs:
 
     strategy:
       matrix:
-        configuration: [Debug, Release]
+        configuration: [Release]
 
     runs-on: windows-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
@@ -77,9 +77,15 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
 
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
     # Execute all unit tests in the solution
     - name: Execute unit tests
-      run: dotnet test --verbosity normal
+      run: dotnet test -- no-build
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
 #     - name: Restore the application
