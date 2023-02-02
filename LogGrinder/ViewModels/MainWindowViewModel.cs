@@ -352,14 +352,16 @@ namespace LogGrinder.ViewModels
                 {
                     _TokenSource = new CancellationTokenSource();
                     var token = _TokenSource.Token;
-
                     searchResult = await _searcher.SearchInOpenedFile(LogLinesBackup, SearchOption, token);
-                    searchResult.FileName = CurrentLogFileItem;
-                    searchResult.FilePath = _LogPaths.FirstOrDefault(f => f.Contains(CurrentLogFileItem));
-
                 }
-                catch (OperationCanceledException) { }
+                catch (CancelWithResultException exception) 
+                {
+                    searchResult = exception.Result as SearchResult;
+                }
                 finally { _TokenSource.Dispose(); }
+
+                searchResult.FileName = CurrentLogFileItem;
+                searchResult.FilePath = _LogPaths.FirstOrDefault(f => f.Contains(CurrentLogFileItem));
 
                 if (!string.IsNullOrEmpty(SearchOption.SearchLine))
                     searchResult.SearchString = SearchOption.SearchLine.Length > 100
@@ -814,7 +816,10 @@ namespace LogGrinder.ViewModels
 
                             result = await _searcher.SearchInFile(filePath, SearchOption, token);
                         }
-                        catch (OperationCanceledException) { }
+                        catch (CancelWithResultException exception)
+                        {
+                            result = exception.Result as SearchResult;
+                        }
                         finally { _TokenSource.Dispose(); }
 
                         if (result.ClearResults.Count > 0)

@@ -39,21 +39,27 @@ namespace LogGrinder.Services
             if (models == null || !models.Any() || option == null)
                 return result;
 
-            await Task.Run(() =>
+            try
             {
-                foreach (var model in models)
+                await Task.Run(() =>
                 {
-                    if (token.IsCancellationRequested)
-                        token.ThrowIfCancellationRequested();
+                    foreach (var model in models)
+                    {
+                        if (token.IsCancellationRequested)
+                            token.ThrowIfCancellationRequested();
 
-                    SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
-                }
+                        SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
+                    }
 
-                if (option.LinesCountAfter > 0 && linesAfter.Any())
-                    result.ResultsWithNearestLines.AddRange(linesAfter);
+                    AddAfterQueue(option.LinesCountAfter, result, linesAfter);
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                AddAfterQueue(option.LinesCountAfter, result, linesAfter);
 
-                result.ResultsWithNearestLines = result.ResultsWithNearestLines.Distinct().ToList();
-            });
+                throw new CancelWithResultException(result);
+            }
 
             return result;
         }
@@ -78,33 +84,52 @@ namespace LogGrinder.Services
                 Share = FileShare.ReadWrite,
             };
 
-            using var file = _fileManager.StreamReader(filePath, fileReadingOptionns);
-            while ((jsonString = file.ReadLine()) != null)
+            try
             {
-                if (token.IsCancellationRequested)
-                    token.ThrowIfCancellationRequested();
+                using var file = _fileManager.StreamReader(filePath, fileReadingOptionns);
+                while ((jsonString = file.ReadLine()) != null)
+                {
+                    if (token.IsCancellationRequested)
+                        token.ThrowIfCancellationRequested();
 
-                byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
-                using MemoryStream openStream = new(bytes);
+                    byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
+                    using MemoryStream openStream = new(bytes);
 
-                var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream, cancellationToken: token);
-                if (model == null)
-                    continue;
+                    var model = await JsonSerializer.DeserializeAsync<LogModel>(openStream, cancellationToken: token);
+                    if (model == null)
+                        continue;
 
-                counter++;
-                model.Id = counter;
-                SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
+                    counter++;
+                    model.Id = counter;
+                    SearchWithNearesLines(option, linesBefore, linesAfter, result, ref startCollectLinesAfter, model);
 
-                _fileHandler.AddCustomAttributes(ref model, jsonString, filePath);
+                    _fileHandler.AddCustomAttributes(ref model, jsonString, filePath);
+                }
+
+                AddAfterQueue(option.LinesCountAfter, result, linesAfter);
+            }
+            catch (OperationCanceledException)
+            {
+                AddAfterQueue(option.LinesCountAfter, result, linesAfter);
+
+                throw new CancelWithResultException(result);
             }
 
-            // если ПОСТочередь не заполнилась, то всё равно надо слить остатки в результаты
-            if (option.LinesCountAfter > 0 && linesAfter.Any())
+            return result;
+        }
+
+        /// <summary>
+        /// Если ПОСТочередь не заполнилась, то всё равно надо слить остатки в результаты
+        /// </summary>
+        /// <param name="linesCountAfter"></param>
+        /// <param name="result"></param>
+        /// <param name="linesAfter"></param>
+        private void AddAfterQueue(int linesCountAfter, SearchResult result, Queue<LogModel> linesAfter)
+        {
+            if (linesCountAfter > 0 && linesAfter.Any())
                 result.ResultsWithNearestLines.AddRange(linesAfter);
 
             result.ResultsWithNearestLines = result.ResultsWithNearestLines.Distinct().ToList();
-
-            return result;
         }
 
         /// <summary>

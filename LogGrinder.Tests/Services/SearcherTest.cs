@@ -141,7 +141,7 @@ namespace LogGrinder.Tests.Services
             CancellationTokenSource tokenSource = new();
             CancellationToken token = tokenSource.Token;
             tokenSource.CancelAfter(0);
-            Exception exception = null;
+            CancelWithResultException? exception = null;
 
             // Act
             try
@@ -150,7 +150,7 @@ namespace LogGrinder.Tests.Services
             }
             catch (Exception ex)
             {
-                exception = ex;
+                exception = ex as CancelWithResultException;
             }
             finally
             {
@@ -158,7 +158,8 @@ namespace LogGrinder.Tests.Services
             }
 
             // Assert
-            Assert.IsType<OperationCanceledException>(exception);
+            Assert.NotNull(exception);
+            Assert.NotNull(exception.Result);
         }
 
         #endregion
@@ -276,7 +277,7 @@ namespace LogGrinder.Tests.Services
             using CancellationTokenSource _tokenSource = new();
             CancellationToken _token = _tokenSource.Token;
             _tokenSource.CancelAfter(0);
-            Exception exception = null;
+            CancelWithResultException? exception = null;
 
             var sut = PrepareSUTForSearchInFile();
 
@@ -287,7 +288,7 @@ namespace LogGrinder.Tests.Services
             }
             catch (Exception ex)
             {
-                exception = ex;
+                exception = ex as CancelWithResultException;
             }
             finally
             {
@@ -295,7 +296,8 @@ namespace LogGrinder.Tests.Services
             }
 
             // Assert
-            Assert.IsType<OperationCanceledException>(exception);
+            Assert.NotNull(exception);
+            Assert.NotNull(exception.Result);
         }
 
         #endregion
